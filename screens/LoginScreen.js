@@ -11,9 +11,6 @@ import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
 
-// Tela "Comece agora com o mapeei!" (cadastro) — frame "6" do Figma
-// (node 312:278). Layout em coluna com auto layout, ao contrário da
-// HomeScreen (que usa um frame fixo 393x852 com posicionamento absoluto).
 export default function LoginScreen({ navigation }) {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -23,7 +20,7 @@ export default function LoginScreen({ navigation }) {
   const [rememberMe, setRememberMe] = useState(false);
 
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#FAFBF8' }} />; // Return a blank screen while waiting
+    return <View style={{ flex: 1, backgroundColor: '#FAFBF8' }} />; // Tela branca durante carregamento da fonte
   }
 
   return (
