@@ -1,6 +1,6 @@
+import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
@@ -9,7 +9,7 @@ import SocialButton from '../components/SocialButton';
 // Tela "Comece agora com o mapeei!" (cadastro) — frame "6" do Figma
 // (node 312:278). Layout em coluna com auto layout, ao contrário da
 // HomeScreen (que usa um frame fixo 393x852 com posicionamento absoluto).
-export default function SignUpScreen() {
+export default function SignUpScreen({ navigation }) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   return (
@@ -73,7 +73,11 @@ export default function SignUpScreen() {
         <Pressable onPress={() => {}}>
           <Text style={styles.loginPrompt}>
             Já possui uma conta?{'  '}
-            <Text style={styles.loginPromptLink}>Entre</Text>
+            <Text
+              style={styles.loginPromptLink}
+              onPress={() => navigation.navigate('Login')}>
+                Entre
+            </Text>
           </Text>
         </Pressable>
 
