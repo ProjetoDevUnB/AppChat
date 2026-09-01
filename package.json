@@ -22,11 +22,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "lint": "expo lint"
   },
   "private": true,
   "devDependencies": {
     "@types/react": "~19.1.10",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
   "//overrides": "Correções de segurança em deps transitivas (build/dev). decode-uri-component: DoS no parser de deep-link (react-navigation). postcss: já corrigido, fixado para impedir regressão. uuid: bounds check (GHSA em <11.1.1). image-size não tem patch disponível ainda (metro).",
