@@ -1,8 +1,23 @@
-import { Image, Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  type ImageSourcePropType,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 // Botão outline com ícone + texto, usado para os logins sociais
 // (Apple/Google) na tela de cadastro.
-export default function SocialButton({ icon, label, onPress, style }) {
+type SocialButtonProps = {
+  icon: ImageSourcePropType;
+  label: string;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+};
+
+export default function SocialButton({ icon, label, onPress, style }: SocialButtonProps) {
   return (
     <Pressable style={[styles.button, style]} onPress={onPress}>
       <Image source={icon} style={styles.icon} />

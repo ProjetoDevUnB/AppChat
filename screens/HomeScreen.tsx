@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import PillButton from '../components/PillButton';
 import PaginationDots from '../components/PaginationDots';
+import type { RootStackScreenProps } from '../types/navigation';
 
 // Layout desenhado sobre um frame de referência 393x852 (iPhone 14 Pro).
 // Todos os elementos usam posicionamento absoluto para bater pixel a pixel
@@ -13,7 +14,7 @@ import PaginationDots from '../components/PaginationDots';
 // telas mais baixas que 852px empurrava elas pra fora da área visível),
 // ficam ancoradas em `bottom` + safe area, então sempre aparecem coladas
 // ao rodapé da tela do aparelho, independente da altura dele.
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation }: RootStackScreenProps<'Home'>) {
   const insets = useSafeAreaInsets();
 
   return (

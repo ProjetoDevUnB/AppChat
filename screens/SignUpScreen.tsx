@@ -2,26 +2,16 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_700Bold, useFonts
-} from '@expo-google-fonts/inter';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
+import type { RootStackScreenProps } from '../types/navigation';
 
-export default function LoginScreen({ navigation }) {
-  const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
-  });
-  const [rememberMe, setRememberMe] = useState(false);
-
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#FAFBF8' }} />; // Tela branca durante carregamento da fonte
-  }
+// Tela "Comece agora com o mapeei!" (cadastro) — frame "6" do Figma
+// (node 312:278). Layout em coluna com auto layout, ao contrário da
+// HomeScreen (que usa um frame fixo 393x852 com posicionamento absoluto).
+export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignUp'>) {
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -35,8 +25,9 @@ export default function LoginScreen({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Bem-vindo(a) de volta!</Text>
-        <Text style={styles.subtitle}>Entre com suas credenciais para acessar sua conta.</Text>
+        <Text style={styles.title}>Comece agora com o mapeei!</Text>
+
+        <FormField label="Nome" placeholder="Digite seu nome" />
 
         <FormField
           label="E-mail"
@@ -47,14 +38,12 @@ export default function LoginScreen({ navigation }) {
 
         <FormField label="Senha" placeholder="Digite uma senha" secureTextEntry />
 
-        <Text style={styles.forgotPasswordText}>esqueceu sua senha?</Text>
-
         <Pressable
           style={styles.termsRow}
-          onPress={() => setRememberMe((prev) => !prev)}
+          onPress={() => setAcceptedTerms((prev) => !prev)}
         >
-          <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
-          <Text style={styles.rememberMeText}>Lembrar de mim</Text>
+          <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]} />
+          <Text style={styles.termsText}>Li e concordo com os termos de uso</Text>
         </Pressable>
 
         <PillButton
@@ -84,8 +73,12 @@ export default function LoginScreen({ navigation }) {
 
         <Pressable onPress={() => {}}>
           <Text style={styles.loginPrompt}>
-            Não tem uma conta?{'  '}
-            <Text style={styles.loginPromptLink} onPress={() => navigation.navigate('SignUp')}>Crie agora</Text>
+            Já possui uma conta?{'  '}
+            <Text
+              style={styles.loginPromptLink}
+              onPress={() => navigation.navigate('Login')}>
+                Entre
+            </Text>
           </Text>
         </Pressable>
 
@@ -120,21 +113,12 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 16,
     fontFamily: 'Inter_700Bold',
+    fontWeight: 'bold',
     fontSize: 32,
     lineHeight: 38,
     letterSpacing: -0.64,
     color: '#1A1A1A',
   },
-  subtitle: {
-    alignSelf: 'stretch',
-    marginTop: 16,
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    lineHeight: 38,
-    letterSpacing: -0.64,
-    color: '#AAAAAA',
-  },
-
   termsRow: {
     alignSelf: 'stretch',
     flexDirection: 'row',
@@ -151,7 +135,7 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: '#000000',
   },
-  rememberMeText: {
+  termsText: {
     flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
@@ -192,14 +176,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     color: '#000000',
-  },
-  forgotPasswordText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    lineHeight: 10,
-    color: '#832D51',
-    alignSelf: 'stretch',
-    textAlign: 'right',
   },
   loginPromptLink: {
     color: '#E96E97',

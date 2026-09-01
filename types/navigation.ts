@@ -1,0 +1,20 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+// Rotas do Stack raiz (definido em App.tsx). Cada tela recebe suas props
+// tipadas via RootStackScreenProps<'NomeDaRota'>, o que também tipa
+// navigation.navigate() com os nomes de rota válidos.
+export type RootStackParamList = {
+  Home: undefined;
+  SignUp: undefined;
+  Login: undefined;
+};
+
+export type RootStackScreenProps<T extends keyof RootStackParamList> =
+  NativeStackScreenProps<RootStackParamList, T>;
+
+// Torna navigation.navigate() global também tipado (opcional, mas útil).
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
