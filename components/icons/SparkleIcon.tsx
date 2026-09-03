@@ -1,10 +1,5 @@
 import Svg, { Path } from 'react-native-svg';
 
-// Estrelas decorativas do card do carrossel ("Passeios no DF"): uma rosa
-// grande de 8 pontas e uma verde menor de 6 pontas. Ambas extraídas de
-// assets/svg.svg — a verde já sai com a rotação de 16,36° do design
-// embutida no próprio path, por isso a caixa dela não é quadrada.
-
 type SparkleProps = {
   size?: number;
   color?: string;

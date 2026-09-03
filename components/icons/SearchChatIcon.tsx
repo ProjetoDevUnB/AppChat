@@ -2,7 +2,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { IconProps } from './types';
 
-// Ícone "buscar" do menu inferior (balão com lupa). Extraído de assets/svg.svg.
+// Ícone "buscar" do menu inferior (balão com lupa). 
 const RATIO = 27.86 / 23.74;
 
 export default function SearchChatIcon({ size = 24, color = '#CCCCCC' }: IconProps) {

@@ -18,19 +18,6 @@ import CoinsIcon from '../components/icons/CoinsIcon';
 import SecurityIcon from '../components/icons/SecurityIcon';
 import type { RootStackScreenProps } from '../types/navigation';
 
-// Tela de descoberta — a home de conteúdo do app (a rota "Home" continua
-// sendo o onboarding). Estrutura, de cima pra baixo: logo, carrossel de
-// destaques, título + carrossel de categorias, texto, card do guia com mais
-// texto e o menu inferior flutuante.
-//
-// Diferente do HomeScreen, que desenha tudo em posição absoluta sobre um
-// frame fixo de 393x852, aqui o conteúdo rola e tem carrossel horizontal, então
-// o layout é em fluxo (margens/paddings). Isso também é mais fiel ao Figma:
-// o export (assets/css.css) descreve os blocos como auto-layout ancorados em
-// left/right 16px, com 16px de respiro entre eles.
-
-// Por enquanto os cinco slides usam a mesma foto, como combinado — quando
-// houver conteúdo real, basta trocar a lista.
 const CAROUSEL_PHOTO = require('../assets/discover_carousel.jpg');
 
 const HERO_SLIDES: HeroSlide[] = Array.from({ length: 5 }, () => ({
@@ -38,9 +25,6 @@ const HERO_SLIDES: HeroSlide[] = Array.from({ length: 5 }, () => ({
   title: 'Passeios no DF',
 }));
 
-// Card do guia: 16px de margem de cada lado e 1px de borda, então a foto
-// dentro dele mede (largura da tela - 32 - 2). O RN Web precisa dessas medidas
-// explícitas para o resizeMode="cover" recortar em cima do tamanho certo.
 const GUIDE_CARD_HEIGHT = 199;
 const GUIDE_CARD_MARGIN = 16;
 const GUIDE_CARD_BORDER = 1;
@@ -190,8 +174,6 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   sectionSubtitle: {
-    // O título de 32px tem entrelinha folgada; o Figma encosta o subtítulo
-    // logo abaixo do desenho da letra, então descontamos essa sobra.
     marginTop: -4,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
@@ -210,8 +192,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 32,
   },
-  // No Figma o bloco de texto depois do card do guia fica num frame com
-  // 8px de padding interno, daí o respiro extra em relação ao primeiro.
   descriptionAfterCard: {
     marginTop: 24,
   },
@@ -241,7 +221,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginHorizontal: GUIDE_CARD_MARGIN,
     height: GUIDE_CARD_HEIGHT,
-    // Figma: border-radius 0 32px -> só o topo direito e a base esquerda.
     borderTopLeftRadius: 0,
     borderTopRightRadius: 32,
     borderBottomRightRadius: 0,

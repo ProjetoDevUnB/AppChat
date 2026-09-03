@@ -2,9 +2,6 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { IconProps } from './types';
 
-// Ícone da categoria "Lazer" (bicicleta), de assets/lazer.svg. O export
-// original vinha com viewBox="0 0 25 56", que cortava metade do desenho —
-// os traços na verdade ocupam ~54x55, então o viewBox foi refeito.
 const RATIO = 54.5 / 55.5;
 
 export default function BikeIcon({ size = 52, color = '#FFFFFF' }: IconProps) {

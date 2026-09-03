@@ -2,9 +2,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { IconProps } from './types';
 
-// Ícone da categoria "Transporte" (ônibus). Extraído do export vetorial
-// completo do Figma (assets/svg.svg) e não de assets/car.svg — este último
-// é o card inteiro, com o fundo e o texto "Transporte" já vetorizados.
+// Ícone da categoria "Transporte" (ônibus).
 const RATIO = 42.63 / 55.03;
 
 export default function BusIcon({ size = 52, color = '#FFFFFF' }: IconProps) {

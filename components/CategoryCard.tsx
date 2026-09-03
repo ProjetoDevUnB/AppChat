@@ -10,11 +10,7 @@ import {
 import type { IconProps } from './icons/types';
 
 // Card de categoria do carrossel horizontal da tela de descoberta
-// (Segurança, Transporte, Lazer, Custo de vida): retângulo vinho com cantos
-// bem arredondados, ícone vetorial em cima e rótulo embaixo.
-//
-// O `onPress` é opcional porque as páginas de destino de cada categoria
-// ainda não existem — por ora o card só precisa existir e responder ao toque.
+// Botões ainda não levam para lugar nenhum. 
 
 export const CATEGORY_CARD_WIDTH = 132;
 export const CATEGORY_CARD_HEIGHT = 112;

@@ -17,12 +17,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { SparkleLarge, SparkleSmall } from './icons/SparkleIcon';
 
 // Carrossel de destaque do topo da tela de descoberta ("Passeios no DF").
-// Cada slide é uma foto com um degradê por cima, duas estrelas decorativas
-// no canto superior direito e o título embaixo à esquerda.
-//
-// O ScrollView ocupa a largura toda da tela e cada slide tem a largura da
-// tela, para o `pagingEnabled` encaixar certinho um card por vez; a margem
-// lateral de 16px que aparece no design vem do card dentro do slide.
+// Imagens mockadas para o carrousel. 
 
 const CARD_HEIGHT = 242;
 const CARD_MARGIN = 16;

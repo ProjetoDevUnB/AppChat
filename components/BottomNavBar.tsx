@@ -12,17 +12,12 @@ import ProfileIcon from './icons/ProfileIcon';
 import SearchChatIcon from './icons/SearchChatIcon';
 import type { IconProps } from './icons/types';
 
-// Menu de navegação inferior: uma pílula branca flutuante com quatro
-// destinos. O item ativo ganha um quadrado arredondado rosa atrás do ícone;
-// os demais ficam em cinza claro.
-//
+
 // Só os ícones existem por enquanto — as telas de busca, conversas e perfil
 // ainda não foram feitas, então a barra não navega sozinha: quem usa decide
 // o que fazer via `onPressItem`. Assim o componente já serve para as próximas
 // telas sem precisar mexer nele.
-//
-// O posicionamento (bottom / safe area) fica a cargo de quem usa, via
-// `style`, seguindo o mesmo padrão do PaginationDots.
+
 
 const ACTIVE_COLOR = '#E86E97';
 const INACTIVE_ICON_COLOR = '#CCCCCC';

@@ -2,9 +2,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { IconProps } from './types';
 
-// Ícone da categoria "Segurança" (guarda), extraído de assets/security.svg.
-// O viewBox foi reajustado para a caixa real dos traços (o export original
-// declarava 49x60 com folga sobrando embaixo).
+// Ícone da categoria "Segurança" (guarda)
 const RATIO = 48.5 / 53.5;
 
 export default function SecurityIcon({ size = 52, color = '#FFFFFF' }: IconProps) {

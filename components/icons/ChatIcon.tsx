@@ -2,7 +2,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import type { IconProps } from './types';
 
-// Ícone "conversas" do menu inferior (dois balões). Extraído de assets/svg.svg.
+// Ícone "conversas" do menu inferior (dois balões).
 const RATIO = 29.44 / 29.17;
 
 export default function ChatIcon({ size = 24, color = '#CCCCCC' }: IconProps) {
