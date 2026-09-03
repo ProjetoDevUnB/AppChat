@@ -1,9 +1,24 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextInputProps,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 
 // Campo de formulário padrão (rótulo em cima + input em pílula), usado
 // para Nome/E-mail/Senha no cadastro. Qualquer prop de TextInput extra
 // (secureTextEntry, keyboardType, value, onChangeText...) passa direto.
-export default function FormField({ label, style, inputStyle, ...inputProps }) {
+type FormFieldProps = TextInputProps & {
+  label: string;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+};
+
+export default function FormField({ label, style, inputStyle, ...inputProps }: FormFieldProps) {
   return (
     <View style={[styles.field, style]}>
       <Text style={styles.label}>{label}</Text>
