@@ -63,7 +63,7 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
             existir, é aqui que ele entra — validar as credenciais e só então
             navegar. */}
         <PillButton
-          label="Inscreva-se"
+          label="Entrar"
           onPress={() => navigation.navigate('Discover')}
           style={styles.signUpButton}
           textStyle={styles.signUpButtonText}
