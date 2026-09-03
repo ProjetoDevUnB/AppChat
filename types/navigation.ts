@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 // navigation.navigate() com os nomes de rota válidos.
 export type RootStackParamList = {
   Home: undefined;
+  Discover: undefined;
   SignUp: undefined;
   Login: undefined;
 };
