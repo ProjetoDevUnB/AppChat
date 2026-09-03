@@ -58,9 +58,13 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
           <Text style={styles.rememberMeText}>Lembrar de mim</Text>
         </Pressable>
 
+        {/* MOCK: ainda não existe autenticação, então o botão de entrar só
+            leva direto para a tela de descoberta. Quando o login de verdade
+            existir, é aqui que ele entra — validar as credenciais e só então
+            navegar. */}
         <PillButton
           label="Inscreva-se"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('Discover')}
           style={styles.signUpButton}
           textStyle={styles.signUpButtonText}
         />
