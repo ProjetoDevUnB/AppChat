@@ -1,0 +1,35 @@
+import Svg, { Path } from 'react-native-svg';
+
+// Estrelas decorativas do card do carrossel ("Passeios no DF"): uma rosa
+// grande de 8 pontas e uma verde menor de 6 pontas. Ambas extraídas de
+// assets/svg.svg — a verde já sai com a rotação de 16,36° do design
+// embutida no próprio path, por isso a caixa dela não é quadrada.
+
+type SparkleProps = {
+  size?: number;
+  color?: string;
+};
+
+export function SparkleLarge({ size = 100, color = '#E96E97' }: SparkleProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 86.89 86.89" fill="none">
+      <Path
+        d="M41.49 2.08 C41.96 0 44.92 0 45.39 2.08 L50.13 23.04 C50.43 24.38 51.98 25.02 53.15 24.29 L71.31 12.82 C73.11 11.68 75.21 13.77 74.07 15.57 L62.6 33.74 C61.86 34.91 62.5 36.45 63.85 36.76 L84.81 41.49 C86.89 41.96 86.89 44.92 84.81 45.39 L63.85 50.13 C62.5 50.43 61.86 51.98 62.6 53.15 L74.07 71.31 C75.21 73.11 73.11 75.21 71.31 74.07 L53.15 62.6 C51.98 61.86 50.43 62.5 50.13 63.85 L45.39 84.81 C44.92 86.89 41.96 86.89 41.49 84.81 L36.76 63.85 C36.45 62.5 34.91 61.86 33.74 62.6 L15.57 74.07 C13.77 75.21 11.68 73.11 12.81 71.31 L24.29 53.15 C25.02 51.98 24.38 50.43 23.04 50.13 L2.08 45.39 C0 44.92 0 41.96 2.08 41.49 L23.04 36.76 C24.38 36.45 25.02 34.91 24.29 33.74 L12.81 15.57 C11.68 13.77 13.77 11.68 15.57 12.82 L33.74 24.29 C34.91 25.02 36.45 24.38 36.76 23.04 L41.49 2.08 Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+const SMALL_RATIO = 40.55 / 42.25;
+
+export function SparkleSmall({ size = 47.67, color = '#A6BA1A' }: SparkleProps) {
+  return (
+    <Svg width={size * SMALL_RATIO} height={size} viewBox="0 0 40.55 42.25" fill="none">
+      <Path
+        d="M23.57 0.77 C24.12 0 25.34 0.36 25.38 1.3 L26.05 14.78 C26.07 15.2 26.34 15.56 26.74 15.69 L39.61 19.75 C40.52 20.04 40.55 21.31 39.67 21.64 L27.05 26.44 C26.66 26.58 26.4 26.96 26.41 27.38 L26.52 40.87 C26.52 41.82 25.33 42.25 24.74 41.51 L16.28 30.99 C16.02 30.67 15.58 30.54 15.18 30.67 L2.38 34.94 C1.48 35.25 0.71 34.24 1.23 33.45 L8.62 22.16 C8.85 21.81 8.83 21.35 8.59 21.01 L0.56 10.16 C0 9.4 0.71 8.35 1.63 8.6 L14.65 12.14 C15.06 12.25 15.49 12.1 15.73 11.75 L23.57 0.77 Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
