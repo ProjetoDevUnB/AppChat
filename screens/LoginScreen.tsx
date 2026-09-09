@@ -2,27 +2,48 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_700Bold, useFonts
-} from '@expo-google-fonts/inter';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+
+import { auth } from '../App'; // Adjust path if needed
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
+
 import type { RootStackScreenProps } from '../types/navigation';
-
 export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'>) {
-  const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#FAFBF8' }} />; // Tela branca durante carregamento da fonte
-  }
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setErrorMessage('Por favor, preencha e-mail e senha.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.navigate('Discover');
+    } catch (error: any) {
+      if (
+        error.code === 'auth/invalid-email' || 
+        error.code === 'auth/user-not-found' || 
+        error.code === 'auth/wrong-password' || 
+        error.code === 'auth/invalid-credential'
+      ) {
+        setErrorMessage('E-mail ou senha incorretos.');
+      } else {
+        setErrorMessage('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -44,9 +65,23 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
           placeholder="Digite seu e-mail"
           keyboardType="email-address"
           autoCapitalize="none"
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            setErrorMessage('');
+          }}
         />
 
-        <FormField label="Senha" placeholder="Digite uma senha" secureTextEntry />
+        <FormField 
+          label="Senha" 
+          placeholder="Digite uma senha" 
+          secureTextEntry 
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            setErrorMessage('');
+          }}
+        />
 
         <Text style={styles.forgotPasswordText}>esqueceu sua senha?</Text>
 
@@ -58,15 +93,16 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
           <Text style={styles.rememberMeText}>Lembrar de mim</Text>
         </Pressable>
 
-        {/* MOCK: ainda não existe autenticação, então o botão de entrar só
-            leva direto para a tela de descoberta. Quando o login de verdade
-            existir, é aqui que ele entra — validar as credenciais e só então
-            navegar. */}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
         <PillButton
-          label="Entrar"
-          onPress={() => navigation.navigate('Discover')}
-          style={styles.signUpButton}
+          label={isLoading ? "Entrando..." : "Entrar"}
+          onPress={handleLogin}
+          style={[styles.signUpButton, isLoading && styles.buttonDisabled]}
           textStyle={styles.signUpButtonText}
+          disabled={isLoading}
         />
 
         <View style={styles.dividerRow}>
@@ -139,7 +175,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.64,
     color: '#AAAAAA',
   },
-
   termsRow: {
     alignSelf: 'stretch',
     flexDirection: 'row',
@@ -162,6 +197,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#000000',
   },
+  errorText: {
+    color: '#D32F2F',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    alignSelf: 'stretch',
+    textAlign: 'center',
+  },
   signUpButton: {
     alignSelf: 'stretch',
     height: 48,
@@ -171,6 +213,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   signUpButtonText: {
     fontFamily: 'Inter_500Medium',
