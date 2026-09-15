@@ -2,16 +2,94 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+
+import { auth } from '../App';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
 import type { RootStackScreenProps } from '../types/navigation';
 
-// Tela "Comece agora com o mapeei!" (cadastro) — frame "6" do Figma
-// (node 312:278). Layout em coluna com auto layout, ao contrário da
-// HomeScreen (que usa um frame fixo 393x852 com posicionamento absoluto).
+const SIGNUP_TIMEOUT_MS = 20000;
+
+class TimeoutError extends Error {}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new TimeoutError()), ms);
+    promise.then(resolve, reject).finally(() => clearTimeout(timer));
+  });
+}
+
+
 export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignUp'>) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Limpa o erro assim que o usuário corrige qualquer campo.
+  const handleChange = (setter: (value: string) => void) => (text: string) => {
+    setter(text);
+    setErrorMessage('');
+  };
+
+  const handleSignUp = async () => {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !trimmedEmail || !password) {
+      setErrorMessage('Por favor, preencha nome, e-mail e senha.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setErrorMessage('É preciso aceitar os termos de uso para continuar.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const { user } = await withTimeout(
+        createUserWithEmailAndPassword(auth, trimmedEmail, password),
+        SIGNUP_TIMEOUT_MS,
+      );
+
+      await withTimeout(updateProfile(user, { displayName: trimmedName }), SIGNUP_TIMEOUT_MS);
+      navigation.navigate('Discover');
+    } catch (error: any) {
+
+      console.warn('[signup] falha ao criar conta:', error?.code ?? error);
+
+      if (error instanceof TimeoutError) {
+        setErrorMessage('A conexão está demorando demais. Tente novamente.');
+      } else if (error.code === 'auth/admin-restricted-operation') {
+
+        setErrorMessage('O cadastro está indisponível no momento. Tente mais tarde.');
+      } else if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage('Este e-mail já está cadastrado.');
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('Digite um e-mail válido.');
+      } else if (error.code === 'auth/weak-password') {
+        setErrorMessage('A senha deve ter pelo menos 6 caracteres.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setErrorMessage('Sem conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setErrorMessage('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -27,30 +105,53 @@ export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignU
       >
         <Text style={styles.title}>Comece agora com o mapeei!</Text>
 
-        <FormField label="Nome" placeholder="Digite seu nome" />
+        <FormField
+          label="Nome"
+          placeholder="Digite seu nome"
+          autoCapitalize="words"
+          value={name}
+          onChangeText={handleChange(setName)}
+        />
 
         <FormField
           label="E-mail"
           placeholder="Digite seu e-mail"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          value={email}
+          onChangeText={handleChange(setEmail)}
         />
 
-        <FormField label="Senha" placeholder="Digite uma senha" secureTextEntry />
+        <FormField
+          label="Senha"
+          placeholder="Digite uma senha"
+          secureTextEntry
+          value={password}
+          onChangeText={handleChange(setPassword)}
+        />
 
         <Pressable
           style={styles.termsRow}
-          onPress={() => setAcceptedTerms((prev) => !prev)}
+          onPress={() => {
+            setAcceptedTerms((prev) => !prev);
+            setErrorMessage('');
+          }}
         >
           <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]} />
           <Text style={styles.termsText}>Li e concordo com os termos de uso</Text>
         </Pressable>
 
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
+
         <PillButton
-          label="Inscreva-se"
-          onPress={() => {}}
-          style={styles.signUpButton}
+          label={isLoading ? 'Criando conta...' : 'Inscreva-se'}
+          onPress={handleSignUp}
+          style={[styles.signUpButton, isLoading && styles.buttonDisabled]}
           textStyle={styles.signUpButtonText}
+          disabled={isLoading}
         />
 
         <View style={styles.dividerRow}>
@@ -141,6 +242,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#000000',
   },
+  errorText: {
+    color: '#D32F2F',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    alignSelf: 'stretch',
+    textAlign: 'center',
+  },
   signUpButton: {
     alignSelf: 'stretch',
     height: 48,
@@ -150,6 +258,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   signUpButtonText: {
     fontFamily: 'Inter_500Medium',
