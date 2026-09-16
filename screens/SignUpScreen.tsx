@@ -4,11 +4,12 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
-import { auth } from '../App';
+import { auth, db } from '../App';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
 import type { RootStackScreenProps } from '../types/navigation';
+import { doc, setDoc } from 'firebase/firestore';
 
 const SIGNUP_TIMEOUT_MS = 20000;
 
@@ -58,13 +59,21 @@ export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignU
     setIsLoading(true);
     setErrorMessage('');
 
-    try {
+try {
       const { user } = await withTimeout(
         createUserWithEmailAndPassword(auth, trimmedEmail, password),
         SIGNUP_TIMEOUT_MS,
       );
 
       await withTimeout(updateProfile(user, { displayName: trimmedName }), SIGNUP_TIMEOUT_MS);
+
+      await withTimeout(
+        setDoc(doc(db, 'users', user.uid), {
+          name: trimmedName,
+        }),
+        SIGNUP_TIMEOUT_MS
+      );
+
       navigation.navigate('Discover');
     } catch (error: any) {
 
