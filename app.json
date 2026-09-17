@@ -21,7 +21,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O mapeei precisa acessar suas fotos para você escolher uma foto de perfil.",
+          "cameraPermission": "O mapeei precisa acessar a câmera para você tirar uma foto de perfil."
+        }
+      ]
     ]
   }
 }
