@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
-import { auth } from '../App'; // Adjust path if needed
+import { auth } from '../firebase';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';

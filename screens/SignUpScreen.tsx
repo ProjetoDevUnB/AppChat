@@ -3,24 +3,16 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
-import { auth, db } from '../App';
+import { auth, db } from '../firebase';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
 import type { RootStackScreenProps } from '../types/navigation';
-import { doc, setDoc } from 'firebase/firestore';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const SIGNUP_TIMEOUT_MS = 20000;
-
-class TimeoutError extends Error {}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new TimeoutError()), ms);
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
-  });
-}
 
 
 export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignUp'>) {
@@ -59,7 +51,7 @@ export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignU
     setIsLoading(true);
     setErrorMessage('');
 
-try {
+    try {
       const { user } = await withTimeout(
         createUserWithEmailAndPassword(auth, trimmedEmail, password),
         SIGNUP_TIMEOUT_MS,

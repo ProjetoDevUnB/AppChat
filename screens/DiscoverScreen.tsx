@@ -36,7 +36,7 @@ const CATEGORIES = [
   { key: 'custo-de-vida', label: 'Custo de vida', Icon: CoinsIcon },
 ];
 
-export default function DiscoverScreen(_props: RootStackScreenProps<'Discover'>) {
+export default function DiscoverScreen({ navigation }: RootStackScreenProps<'Discover'>) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [fontsLoaded] = useFonts({
@@ -138,6 +138,9 @@ export default function DiscoverScreen(_props: RootStackScreenProps<'Discover'>)
 
       <BottomNavBar
         activeIndex={0}
+        onPressItem={(_index, key) => {
+          if (key === 'profile') navigation.navigate('Profile');
+        }}
         style={[styles.navBar, { bottom: insets.bottom + 16 }]}
       />
 
