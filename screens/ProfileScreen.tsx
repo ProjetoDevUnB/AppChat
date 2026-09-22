@@ -38,6 +38,7 @@ import {
   PhotoTooLargeError,
   type PhotoSource,
 } from '../services/profilePhoto';
+import { getInitials } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
 import { TimeoutError } from '../utils/withTimeout';
 
@@ -98,14 +99,6 @@ function describePhotoError(error: any): string {
     default:
       return 'Não foi possível enviar a foto. Tente novamente.';
   }
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  const first = parts[0][0];
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toUpperCase();
 }
 
 type MenuCardProps = {
@@ -319,6 +312,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
         activeIndex={PROFILE_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'chat') navigation.navigate('Forum');
         }}
         style={[styles.navBar, { bottom: insets.bottom + 16 }]}
       />
