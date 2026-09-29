@@ -27,6 +27,7 @@ import SearchField from '../components/forum/SearchField';
 import { FORUM_COLORS } from '../components/forum/theme';
 import PencilIcon from '../components/icons/PencilIcon';
 import { auth } from '../firebase';
+import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
 import { listPostsByTopic } from '../services/forum';
 import { getAuthors, type Author } from '../services/users';
 import { getTopicLabel, type Post } from '../types/forum';
@@ -54,6 +55,9 @@ export default function TopicPostsScreen({
   const [flair, setFlair] = useState<FlairFilter>(null);
 
   const user = auth.currentUser;
+  // Nome e foto vêm do documento do usuário, não do Auth: é lá que o avatar
+  // é salvo, e o `displayName` pode estar desatualizado.
+  const currentAuthor = useCurrentAuthor();
   const currentUid = user?.uid ?? null;
 
   const load = useCallback(async () => {
@@ -144,7 +148,8 @@ export default function TopicPostsScreen({
             <ForumHeader
               label="Conversas"
               onBack={() => navigation.goBack()}
-              userName={user?.displayName ?? (user ? 'Usuário' : null)}
+              userName={currentAuthor?.name ?? (user ? 'Usuário' : null)}
+              userPhotoUrl={currentAuthor?.photoUrl}
               onPressAvatar={() => navigation.navigate('Profile')}
             />
 

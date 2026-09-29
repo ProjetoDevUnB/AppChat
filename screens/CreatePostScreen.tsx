@@ -24,6 +24,7 @@ import ForumHeader from '../components/forum/ForumHeader';
 import { FORUM_COLORS } from '../components/forum/theme';
 import PillButton from '../components/PillButton';
 import { auth } from '../firebase';
+import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
 import { createPost, MAX_BODY_LENGTH, MAX_TITLE_LENGTH } from '../services/forum';
 import { FLAIRS, getTopicLabel, type FlairId } from '../types/forum';
 import type { RootStackScreenProps } from '../types/navigation';
@@ -48,6 +49,9 @@ export default function CreatePostScreen({
   const [error, setError] = useState('');
 
   const user = auth.currentUser;
+  // Nome e foto vêm do documento do usuário, não do Auth: é lá que o avatar
+  // é salvo, e o `displayName` pode estar desatualizado.
+  const currentAuthor = useCurrentAuthor();
 
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && flair !== null;
 
@@ -96,7 +100,8 @@ export default function CreatePostScreen({
         <ForumHeader
           label="Nova conversa"
           onBack={() => navigation.goBack()}
-          userName={user?.displayName ?? (user ? 'Usuário' : null)}
+          userName={currentAuthor?.name ?? (user ? 'Usuário' : null)}
+          userPhotoUrl={currentAuthor?.photoUrl}
         />
 
         <Text style={styles.topic}>{getTopicLabel(topicId)}</Text>

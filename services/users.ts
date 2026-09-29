@@ -1,9 +1,9 @@
 import { doc, getDoc } from 'firebase/firestore';
 
 import { db } from '../firebase';
+import { USERS_COLLECTION } from '../types/user';
 import { withTimeout } from '../utils/withTimeout';
 
-const USERS_COLLECTION = 'users';
 const FETCH_TIMEOUT_MS = 15000;
 
 const FALLBACK_NAME = 'Morador';
@@ -25,31 +25,24 @@ const cache = new Map<string, Author>();
 // renderiza de uma vez) compartilham a mesma leitura.
 const inFlight = new Map<string, Promise<Author>>();
 
-/**
- * Busca a foto de perfil do autor.
- *
- * MOCK: por enquanto devolve sempre `null`, e os cards mostram as iniciais.
- * A leitura real já existe — `loadProfilePhoto(uid)` em `services/profilePhoto.ts`
- * lê `avatars/{uid}` — e basta trocar por ela aqui. O motivo de não ligar agora
- * é o custo: cada avatar é uma data URL de dezenas de KB e seriam N documentos
- * extras por rolagem da lista.
- */
-async function fetchPhotoUrl(_uid: string): Promise<string | null> {
-  return null;
-}
-
 async function fetchAuthor(uid: string): Promise<Author> {
-  const [snapshot, photoUrl] = await Promise.all([
-    withTimeout(getDoc(doc(db, USERS_COLLECTION, uid)), FETCH_TIMEOUT_MS),
-    fetchPhotoUrl(uid),
-  ]);
+  const snapshot = await withTimeout(
+    getDoc(doc(db, USERS_COLLECTION, uid)),
+    FETCH_TIMEOUT_MS,
+  );
 
-  const name = snapshot.data()?.name;
+  const data = snapshot.data();
+  const name = data?.name;
+  // A foto mora no mesmo documento do nome, então ela não custa leitura
+  // nenhuma: já veio neste snapshot. O que ela custa é payload — o SDK web não
+  // tem projeção (`select()`), então não dá para pedir só o nome. É o cache
+  // acima que segura isso numa lista com vários posts do mesmo autor.
+  const photoUrl = data?.photoDataUrl;
 
   return {
     uid,
     name: typeof name === 'string' && name.trim() ? name.trim() : FALLBACK_NAME,
-    photoUrl,
+    photoUrl: typeof photoUrl === 'string' ? photoUrl : null,
   };
 }
 
@@ -96,6 +89,15 @@ export async function getAuthors(uids: string[]): Promise<Map<string, Author>> {
 /** Descarta o cache — usado ao trocar de conta. */
 export function clearAuthorCache() {
   cache.clear();
+}
+
+/**
+ * Esquece um autor específico. Necessário porque o cache agora guarda a foto:
+ * sem isto, quem troca o próprio avatar continua se vendo com o antigo nos
+ * posts até recarregar o app.
+ */
+export function invalidateAuthor(uid: string) {
+  cache.delete(uid);
 }
 
 /** Iniciais para o avatar quando não há foto. */

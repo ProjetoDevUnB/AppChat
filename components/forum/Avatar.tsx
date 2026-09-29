@@ -11,8 +11,6 @@ import { getInitials } from '../../services/users';
 import { FORUM_COLORS } from './theme';
 
 // Círculo com a foto do autor ou, na falta dela, as iniciais do nome.
-// Hoje `photoUrl` chega sempre `null` porque a busca de foto em
-// `services/users.ts` está mockada.
 type AvatarProps = {
   name: string;
   photoUrl?: string | null;

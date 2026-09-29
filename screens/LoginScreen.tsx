@@ -8,6 +8,7 @@ import { auth } from '../firebase';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
+import { ensureUserProfile } from '../services/userProfile';
 
 import type { RootStackScreenProps } from '../types/navigation';
 export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'>) {
@@ -27,7 +28,14 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
     setErrorMessage('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+
+      try {
+        await ensureUserProfile(user);
+      } catch (error: any) {
+        console.warn('[login] falha ao completar o perfil:', error?.code ?? error);
+      }
+
       navigation.navigate('Discover');
     } catch (error: any) {
       if (

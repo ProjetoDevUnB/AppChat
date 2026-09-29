@@ -30,6 +30,7 @@ import CommentIcon from '../components/icons/CommentIcon';
 import HeartIcon from '../components/icons/HeartIcon';
 import SendIcon from '../components/icons/SendIcon';
 import { auth } from '../firebase';
+import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
 import {
   addComment,
   getPost,
@@ -67,6 +68,9 @@ export default function PostDetailScreen({
   const [actionError, setActionError] = useState('');
 
   const user = auth.currentUser;
+  // Nome e foto vêm do documento do usuário, não do Auth: é lá que o avatar
+  // é salvo, e o `displayName` pode estar desatualizado.
+  const currentAuthor = useCurrentAuthor();
   const currentUid = user?.uid ?? null;
 
   const load = useCallback(async () => {
@@ -180,7 +184,8 @@ export default function PostDetailScreen({
     <ForumHeader
       label="Conversa"
       onBack={() => navigation.goBack()}
-      userName={user?.displayName ?? (user ? 'Usuário' : null)}
+      userName={currentAuthor?.name ?? (user ? 'Usuário' : null)}
+      userPhotoUrl={currentAuthor?.photoUrl}
       onPressAvatar={() => navigation.navigate('Profile')}
     />
   );
