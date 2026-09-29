@@ -1,9 +1,9 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
-import { auth, db } from '../firebase';
-import { withTimeout } from '../utils/withTimeout';
+import { auth } from '../firebase';
+import { updateUserProfile } from './userProfile';
+import { invalidateAuthor } from './users';
 
 // O avatar aparece num círculo de 96pt, ou seja 288px numa tela @3x. Como a
 // imagem agora viaja dentro de um documento do Firestore (e não por uma URL em
@@ -13,17 +13,12 @@ const AVATAR_MAX_SIZE = 384;
 // 0.7 é o ponto em que o JPEG ainda não mostra artefato visível nesse tamanho.
 const AVATAR_JPEG_QUALITY = 0.7;
 
-const UPLOAD_TIMEOUT_MS = 30000;
-
-// Um documento do Firestore não pode passar de 1 MiB. O avatar comprimido fica
-// na casa das dezenas de KB, então esse teto é só uma rede de segurança contra
-// uma imagem patológica — melhor falhar com mensagem clara do que o SDK
-// rejeitar a escrita com erro genérico.
+// Um documento do Firestore não pode passar de 1 MiB, e o avatar agora divide
+// esse limite com o resto do perfil. O comprimido fica na casa das dezenas de
+// KB, então esse teto é só uma rede de segurança contra uma imagem patológica
+// — melhor falhar com mensagem clara do que o SDK rejeitar a escrita com erro
+// genérico.
 const MAX_DATA_URL_LENGTH = 700_000;
-
-// Coleção separada do documento do usuário: assim uma tela que só precisa do
-// nome não arrasta a imagem junto.
-const AVATARS_COLLECTION = 'avatars';
 
 export type PhotoSource = 'camera' | 'library';
 
@@ -95,12 +90,18 @@ export async function compressPhoto(asset: ImagePicker.ImagePickerAsset) {
 }
 
 /**
- * Grava o avatar como data URL num documento do Firestore e devolve a própria
+ * Grava o avatar como data URL no documento do usuário e devolve a própria
  * data URL, já pronta para o `<Image>`.
  *
  * O Cloud Storage exigiria o plano Blaze; o Firestore está no plano gratuito e
- * comporta o avatar com folga. O custo é que a imagem passa a viajar em cada
- * leitura do documento, em vez de ficar numa URL cacheável.
+ * comporta o avatar com folga. O custo é que a imagem viaja junto em toda
+ * leitura do perfil — o SDK web não tem projeção (`select()`), então não há
+ * como pedir só o nome. Hoje isso não pesa, porque cada um lê apenas o próprio
+ * documento; uma futura listagem de vários usuários pediria um documento leve
+ * à parte, não a volta de uma coleção só de avatares.
+ *
+ * A leitura do avatar não mora mais aqui: ela chega junto do resto do perfil,
+ * em `loadUserProfile`/`ensureUserProfile`.
  */
 export async function saveProfilePhoto(base64: string): Promise<string> {
   const user = auth.currentUser;
@@ -113,26 +114,15 @@ export async function saveProfilePhoto(base64: string): Promise<string> {
     throw new PhotoTooLargeError();
   }
 
-  await withTimeout(
-    setDoc(doc(db, AVATARS_COLLECTION, user.uid), {
-      dataUrl,
-      updatedAt: serverTimestamp(),
-    }),
-    UPLOAD_TIMEOUT_MS,
-  );
+  // `updateUserProfile` escreve com merge — sem isso, trocar a foto apagaria
+  // nome, e-mail e data de criação do usuário.
+  await updateUserProfile(user.uid, { photoDataUrl: dataUrl });
+
+  // O fórum guarda autores em cache, foto inclusa; sem isto os posts do próprio
+  // usuário continuariam mostrando o avatar antigo.
+  invalidateAuthor(user.uid);
 
   return dataUrl;
-}
-
-/** Lê o avatar salvo. Devolve `null` se o usuário ainda não enviou nenhum. */
-export async function loadProfilePhoto(uid: string): Promise<string | null> {
-  const snapshot = await withTimeout(
-    getDoc(doc(db, AVATARS_COLLECTION, uid)),
-    UPLOAD_TIMEOUT_MS,
-  );
-
-  const dataUrl = snapshot.data()?.dataUrl;
-  return typeof dataUrl === 'string' ? dataUrl : null;
 }
 
 /** Fluxo completo: escolher, compactar e salvar. `null` = usuário cancelou. */

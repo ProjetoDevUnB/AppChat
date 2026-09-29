@@ -1,6 +1,6 @@
 import { Inter_600SemiBold, useFonts } from '@expo-google-fonts/inter';
 import { StatusBar } from 'expo-status-bar';
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -33,12 +33,14 @@ import {
 } from '../components/icons/profileIconsXml';
 import {
   changeProfilePhoto,
-  loadProfilePhoto,
   PermissionDeniedError,
   PhotoTooLargeError,
   type PhotoSource,
 } from '../services/profilePhoto';
+import { ensureUserProfile } from '../services/userProfile';
+import { clearAuthorCache, getInitials } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
+import type { UserProfile } from '../types/user';
 import { TimeoutError } from '../utils/withTimeout';
 
 const PROFILE_TAB_INDEX = 3;
@@ -100,14 +102,6 @@ function describePhotoError(error: any): string {
   }
 }
 
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '?';
-  const first = parts[0][0];
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toUpperCase();
-}
-
 type MenuCardProps = {
   items: MenuItem[];
   chevronXml: string;
@@ -153,41 +147,48 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
   const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({ Inter_600SemiBold });
 
-  const user = auth.currentUser;
-  // O avatar mora num documento do Firestore (data URL em base64), então é
-  // carregado de forma assíncrona — até chegar, a tela mostra as iniciais.
-  const [photoURL, setPhotoURL] = useState<string | null>(null);
+
+  const [user, setUser] = useState<User | null>(auth.currentUser);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [photoOverride, setPhotoOverride] = useState<string | null>(null);
   const [isUploadingPhoto, setUploadingPhoto] = useState(false);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const pendingSourceRef = useRef<PhotoSource | null>(null);
 
-  const uid = user?.uid;
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+
   useEffect(() => {
-    if (!uid) return;
+    if (!user) {
+      setProfile(null);
+      return;
+    }
 
     let active = true;
-    loadProfilePhoto(uid)
-      .then((url) => {
-        if (active) setPhotoURL(url);
+    ensureUserProfile(user)
+      .then((loaded) => {
+        if (active) setProfile(loaded);
       })
       .catch((error: any) => {
         // Falhar ao carregar não é erro do usuário: a tela apenas segue com as
         // iniciais em vez de acusar um problema que ele não causou.
-        console.warn('[profile] falha ao carregar foto:', error?.code ?? error);
+        console.warn('[profile] falha ao carregar perfil:', error?.code ?? error);
       });
 
     return () => {
       active = false;
     };
-  }, [uid]);
+  }, [user]);
 
   if (!fontsLoaded) {
     return null;
   }
 
-  const displayName = user?.displayName || 'Usuário';
-  const handle = user?.email ? `@${user.email.split('@')[0]}` : '';
+  // O documento é a fonte de verdade; o Auth cobre a janela até ele chegar.
+  const displayName = profile?.name || user?.displayName || 'Usuário';
+  const email = profile?.email || user?.email || '';
+  const handle = email ? `@${email.split('@')[0]}` : '';
+  const photoURL = photoOverride ?? profile?.photoDataUrl ?? null;
 
   const runPendingPhotoPick = async () => {
     const source = pendingSourceRef.current;
@@ -199,7 +200,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
     try {
       const url = await changeProfilePhoto(source);
       if (url) {
-        setPhotoURL(url);
+        setPhotoOverride(url);
       }
     } catch (error: any) {
       console.warn('[profile] falha ao enviar foto:', error?.code ?? error, error?.message ?? '');
@@ -228,6 +229,9 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
     } catch (error: any) {
       console.warn('[profile] falha ao sair:', error?.code ?? error);
     }
+
+    // Nomes e fotos da conta anterior não podem vazar para a próxima sessão.
+    clearAuthorCache();
     navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
   };
 
@@ -319,6 +323,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
         activeIndex={PROFILE_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'chat') navigation.navigate('Forum');
         }}
         style={[styles.navBar, { bottom: insets.bottom + 16 }]}
       />

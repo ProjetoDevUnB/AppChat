@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 
-import { auth, db } from '../firebase';
+import { auth } from '../firebase';
 import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
+import { createUserProfile } from '../services/userProfile';
 import type { RootStackScreenProps } from '../types/navigation';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
@@ -59,12 +59,8 @@ export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignU
 
       await withTimeout(updateProfile(user, { displayName: trimmedName }), SIGNUP_TIMEOUT_MS);
 
-      await withTimeout(
-        setDoc(doc(db, 'users', user.uid), {
-          name: trimmedName,
-        }),
-        SIGNUP_TIMEOUT_MS
-      );
+      // O service já traz o próprio timeout.
+      await createUserProfile(user, trimmedName);
 
       navigation.navigate('Discover');
     } catch (error: any) {
