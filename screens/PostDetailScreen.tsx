@@ -77,7 +77,6 @@ export default function PostDetailScreen({
     if (!post.authorId) return;
     if (post.authorId == auth.currentUser.uid) return;
     
-    // TODO: Check the author isn't the currently active user!
     navigation.navigate('Chat', {
       userId: postAuthor.uid,
       userName: postAuthor.name,
