@@ -75,6 +75,8 @@ export default function PostDetailScreen({
 
   const handleAuthorPress = () => {
     if (!post.authorId) return;
+    if (post.authorId == auth.currentUser.uid) return;
+    
     // TODO: Check the author isn't the currently active user!
     navigation.navigate('Chat', {
       userId: postAuthor.uid,
@@ -261,7 +263,7 @@ export default function PostDetailScreen({
 	      <Pressable
 		style={styles.postAuthor}
 		onPress={handleAuthorPress}
-		disabled={!post.authorId}
+		disabled={!post.authorId || post.authorId === auth.currentUser.uid}
 	      >
                 <Avatar name={postAuthor?.name ?? '?'} photoUrl={postAuthor?.photoUrl} size={30} />
                 <Text style={styles.postAuthorText}>
