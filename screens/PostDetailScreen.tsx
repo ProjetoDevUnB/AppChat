@@ -259,17 +259,17 @@ export default function PostDetailScreen({
                 <FlairChip label={getFlairLabel(post.flair)} variant="badge" />
               </View>
 
-	      <Pressable
-		style={styles.postAuthor}
-		onPress={handleAuthorPress}
-		disabled={!post.authorId || post.authorId === auth.currentUser.uid}
-	      >
+	            <Pressable
+		            style={styles.postAuthor}
+		            onPress={handleAuthorPress}
+		            disabled={!post.authorId || post.authorId === auth.currentUser.uid}
+	            >
                 <Avatar name={postAuthor?.name ?? '?'} photoUrl={postAuthor?.photoUrl} size={30} />
                 <Text style={styles.postAuthorText}>
                   {postAuthor ? `${getShortName(postAuthor.name)} • ` : ''}
                   {formatRelative(post.createdAt)}
                 </Text>
-	      </Pressable>
+	            </Pressable>
               <Text style={styles.postBody}>{post.body}</Text>
 
               <View style={styles.divider} />
