@@ -73,6 +73,15 @@ export default function PostDetailScreen({
   const currentAuthor = useCurrentAuthor();
   const currentUid = user?.uid ?? null;
 
+  const handleAuthorPress = () => {
+    if (!post.authorId) return;
+    // TODO: Check the author isn't the currently active user!
+    navigation.navigate('Chat', {
+      userId: postAuthor.id,
+      userName: postAuthor.name,
+    });
+  }
+  
   const load = useCallback(async () => {
     setError('');
     try {
@@ -249,14 +258,17 @@ export default function PostDetailScreen({
                 <FlairChip label={getFlairLabel(post.flair)} variant="badge" />
               </View>
 
-              <View style={styles.postAuthor}>
+	      <Pressable
+		style={styles.postAuthor}
+		onPress={handleAuthorPress}
+		disabled={!post.authorId}
+	      >
                 <Avatar name={postAuthor?.name ?? '?'} photoUrl={postAuthor?.photoUrl} size={30} />
                 <Text style={styles.postAuthorText}>
                   {postAuthor ? `${getShortName(postAuthor.name)} • ` : ''}
                   {formatRelative(post.createdAt)}
                 </Text>
-              </View>
-
+	      </Pressable>
               <Text style={styles.postBody}>{post.body}</Text>
 
               <View style={styles.divider} />
