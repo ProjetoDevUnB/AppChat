@@ -323,6 +323,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
         activeIndex={PROFILE_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'search') navigation.navigate('Chats');
           if (key === 'chat') navigation.navigate('Forum');
         }}
         style={[styles.navBar, { bottom: insets.bottom + 16 }]}

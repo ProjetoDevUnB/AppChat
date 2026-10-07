@@ -33,7 +33,7 @@ type NavItem = {
 
 const ITEMS: NavItem[] = [
   { key: 'home', label: 'Início', Icon: HomeIcon },
-  { key: 'search', label: 'Buscar', Icon: SearchChatIcon },
+  { key: 'search', label: 'Mensagens', Icon: SearchChatIcon },
   { key: 'chat', label: 'Conversas', Icon: ChatIcon },
   { key: 'profile', label: 'Perfil', Icon: ProfileIcon },
 ];

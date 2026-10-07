@@ -15,6 +15,8 @@ export type RootStackParamList = {
   TopicPosts: { topicId: TopicId };
   PostDetail: { postId: string; topicId: TopicId };
   CreatePost: { topicId: TopicId };
+  Chat: { userId: string; userName?: string };
+  Chats: undefined;
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

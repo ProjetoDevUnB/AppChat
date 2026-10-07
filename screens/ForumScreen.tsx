@@ -158,6 +158,7 @@ export default function ForumScreen({ navigation }: RootStackScreenProps<'Forum'
         activeIndex={CHAT_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'search') navigation.navigate('Chats');
           if (key === 'profile') navigation.navigate('Profile');
         }}
         style={[styles.navBar, { bottom: insets.bottom + 16 }]}

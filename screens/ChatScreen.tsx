@@ -1,14 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Chat } from '@kesha-antonov/react-native-chat';
+import {
+  Bubble,
+  GiftedChat,
+  InputToolbar,
+  Send,
+  type BubbleProps,
+  type IMessage,
+  type InputToolbarProps,
+  type SendProps,
+} from 'react-native-gifted-chat';
+import 'dayjs/locale/pt-br';
 
-import { auth } from '../firebase';
-import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
+import ForumHeader from '../components/forum/ForumHeader';
 import { promptSignIn } from '../components/forum/feedback';
 import { FORUM_COLORS } from '../components/forum/theme';
-import { subscribeToMessages, sendMessage, getUserProfile, type RawMessage } from '../services/chat';
+import SendIcon from '../components/icons/SendIcon';
+import { auth } from '../firebase';
+import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
+import { markChatAsRead, sendMessage, subscribeToMessages, type RawMessage } from '../services/chat';
+import { getAuthor, type Author } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
 
 export default function ChatScreen({ navigation, route }: RootStackScreenProps<'Chat'>) {
@@ -16,8 +29,11 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
   const { userId: recipientId, userName: routeUserName } = route.params;
 
   const [rawMessages, setRawMessages] = useState<RawMessage[]>([]);
-  const [recipientProfile, setRecipientProfile] = useState<any>(null);
+  const [recipient, setRecipient] = useState<Author | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Altura do cabeçalho: o KeyboardAvoidingView do Gifted Chat precisa saber
+  // onde o chat começa para subir o campo de texto na medida certa.
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const user = auth.currentUser;
   const currentAuthor = useCurrentAuthor();
@@ -37,10 +53,11 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
     setRawMessages([]);
     setIsLoading(true);
 
-    // Buscar perfil do destinatário uma vez para obter o Base64 sem transitar no React Navigation
-    getUserProfile(recipientId).then(profile => {
-      if (profile) setRecipientProfile(profile);
-    }).catch(console.warn);
+    // Mesmo cache dos autores do fórum: vindo de um post, nome e foto já estão lá.
+    let active = true;
+    getAuthor(recipientId).then((author) => {
+      if (active) setRecipient(author);
+    });
 
     const unsubscribe = subscribeToMessages(
       recipientId,
@@ -54,11 +71,24 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [recipientId, user, navigation]);
 
+  // Com a conversa aberta, tudo que chega do outro lado já foi visto. Só a
+  // mensagem mais recente importa, então não escreve a cada snapshot.
+  const latestIncomingId = rawMessages.find((msg) => msg.authorId === recipientId)?.id;
+  useEffect(() => {
+    if (!user || !recipientId) return;
+    markChatAsRead(recipientId).catch((error) => {
+      console.warn('[chat] falha ao marcar como lida:', error?.code ?? error);
+    });
+  }, [latestIncomingId, recipientId, user]);
+
   const onSend = useCallback(
-    async (newMessages = []) => {
+    async (newMessages: IMessage[] = []) => {
       if (!user || newMessages.length === 0) return;
       const messageToUpload = newMessages[0];
 
@@ -71,36 +101,80 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
     [recipientId, user]
   );
 
+  const recipientName = recipient?.name ?? routeUserName ?? 'Usuário';
+
   // Mapeia mensagens do banco (normalizadas) para o formato do Gifted Chat em memória
-  const formattedMessages = rawMessages.map((msg) => {
-    const isMe = msg.authorId === user?.uid;
-    return {
-      _id: msg.id,
-      text: msg.text,
-      createdAt: msg.createdAt,
-      user: {
-        _id: msg.authorId,
-        name: isMe ? (currentAuthor?.name ?? 'Eu') : (recipientProfile?.name ?? routeUserName ?? 'Usuário'),
-        avatar: isMe ? currentAuthor?.photoUrl : recipientProfile?.photoDataUrl,
-      },
-    };
-  });
+  const formattedMessages: IMessage[] = useMemo(
+    () =>
+      rawMessages.map((msg) => {
+        const isMe = msg.authorId === user?.uid;
+        return {
+          _id: msg.id,
+          text: msg.text,
+          createdAt: msg.createdAt,
+          user: {
+            _id: msg.authorId,
+            name: isMe ? (currentAuthor?.name ?? 'Eu') : recipientName,
+            avatar: (isMe ? currentAuthor?.photoUrl : recipient?.photoUrl) ?? undefined,
+          },
+        };
+      }),
+    [rawMessages, user?.uid, currentAuthor, recipient, recipientName]
+  );
+
+  const renderBubble = useCallback(
+    (props: BubbleProps<IMessage>) => (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          left: styles.bubbleLeft,
+          right: styles.bubbleRight,
+        }}
+        textStyle={{
+          left: styles.bubbleTextLeft,
+          right: styles.bubbleTextRight,
+        }}
+      />
+    ),
+    []
+  );
+
+  const renderInputToolbar = useCallback(
+    (props: InputToolbarProps<IMessage>) => (
+      <InputToolbar
+        {...props}
+        containerStyle={[styles.inputToolbar, { paddingBottom: insets.bottom + 8 }]}
+        primaryStyle={styles.inputPrimary}
+      />
+    ),
+    [insets.bottom]
+  );
+
+  const renderSend = useCallback(
+    (props: SendProps<IMessage>) => (
+      <Send {...props} isSendButtonAlwaysVisible containerStyle={styles.sendContainer}>
+        <View style={[styles.sendButton, !props.text?.trim() && styles.sendButtonDisabled]}>
+          <SendIcon size={18} color="#FFFFFF" />
+        </View>
+      </Send>
+    ),
+    []
+  );
 
   if (!user) return null;
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insets.top, 24) }]}>
-      <View style={styles.header}>
-        <Pressable 
-          style={styles.backButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color={FORUM_COLORS.title} />
-        </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {recipientProfile?.name ?? routeUserName ?? 'Chat'}
-        </Text>
-        <View style={styles.headerSpacer} />
+    <View style={styles.container}>
+      <View
+        style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 24) + 12 }]}
+        onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
+      >
+        <ForumHeader
+          label={recipientName}
+          onBack={() => navigation.goBack()}
+          userName={recipientName}
+          userPhotoUrl={recipient?.photoUrl}
+        />
       </View>
 
       {isLoading ? (
@@ -108,12 +182,30 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
           <ActivityIndicator size="large" color={FORUM_COLORS.accent} />
         </View>
       ) : (
-        <Chat
+        <GiftedChat
           messages={formattedMessages}
           onSend={onSend}
           user={{ _id: user.uid }}
+          locale="pt-br"
+          colorScheme="light"
+          renderBubble={renderBubble}
+          renderInputToolbar={renderInputToolbar}
+          renderSend={renderSend}
+          messagesContainerStyle={styles.messages}
+          textInputProps={{
+            placeholder: 'Escreva uma mensagem...',
+            placeholderTextColor: FORUM_COLORS.muted,
+            style: styles.composerInput,
+          }}
+          timeTextStyle={{
+            left: styles.timeTextLeft,
+            right: styles.timeTextRight,
+          }}
+          keyboardAvoidingViewProps={{ keyboardVerticalOffset: headerHeight }}
         />
       )}
+
+      <StatusBar style="dark" />
     </View>
   );
 }
@@ -121,15 +213,67 @@ export default function ChatScreen({ navigation, route }: RootStackScreenProps<'
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: FORUM_COLORS.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    height: 56, paddingHorizontal: 16, borderBottomWidth: 1,
-    borderBottomColor: FORUM_COLORS.border, backgroundColor: FORUM_COLORS.surface,
+  headerWrapper: {
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: FORUM_COLORS.border,
+    backgroundColor: FORUM_COLORS.background,
   },
-  backButton: { padding: 4 },
-  headerTitle: {
-    fontFamily: 'Inter_700Bold', fontSize: 16, color: FORUM_COLORS.title,
-    flex: 1, textAlign: 'center',
+  messages: { backgroundColor: FORUM_COLORS.background },
+  bubbleLeft: {
+    backgroundColor: FORUM_COLORS.surface,
+    borderWidth: 1,
+    borderColor: FORUM_COLORS.border,
+    borderRadius: 14,
   },
-  headerSpacer: { width: 32 },
+  bubbleRight: {
+    backgroundColor: FORUM_COLORS.accentDark,
+    borderRadius: 14,
+  },
+  bubbleTextLeft: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    color: FORUM_COLORS.title,
+  },
+  bubbleTextRight: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#FFFFFF',
+  },
+  timeTextLeft: { fontFamily: 'Inter_400Regular', fontSize: 10, color: FORUM_COLORS.muted },
+  timeTextRight: { fontFamily: 'Inter_400Regular', fontSize: 10, color: FORUM_COLORS.accentSoft },
+  inputToolbar: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: FORUM_COLORS.border,
+    backgroundColor: FORUM_COLORS.surface,
+  },
+  inputPrimary: { alignItems: 'flex-end', gap: 8 },
+  composerInput: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderRadius: 22,
+    backgroundColor: FORUM_COLORS.field,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 19,
+    color: FORUM_COLORS.title,
+  },
+  sendContainer: { justifyContent: 'flex-end' },
+  sendButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+    backgroundColor: FORUM_COLORS.accentDark,
+  },
+  sendButtonDisabled: { opacity: 0.4 },
 });

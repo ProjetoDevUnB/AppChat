@@ -18,6 +18,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import TopicPostsScreen from './screens/TopicPostsScreen';
 import ChatScreen from './screens/ChatScreen';
+import ChatsScreen from './screens/ChatsScreen';
 import type { RootStackParamList } from './types/navigation';
 
 // Import só pelo efeito: garante que o Firebase seja inicializado no start do
@@ -49,7 +50,8 @@ const [fontsLoaded] = useFonts({
           <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="CreatePost" component={CreatePostScreen} />
-          <Stack.Screen name="Chat" component={ChatScreen} />	  
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Chats" component={ChatsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

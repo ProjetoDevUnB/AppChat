@@ -139,6 +139,7 @@ export default function DiscoverScreen({ navigation }: RootStackScreenProps<'Dis
       <BottomNavBar
         activeIndex={0}
         onPressItem={(_index, key) => {
+          if (key === 'search') navigation.navigate('Chats');
           if (key === 'chat') navigation.navigate('Forum');
           if (key === 'profile') navigation.navigate('Profile');
         }}
