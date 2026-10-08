@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Bubble,
@@ -23,6 +23,8 @@ import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
 import { markChatAsRead, sendMessage, subscribeToMessages, type RawMessage } from '../services/chat';
 import { getAuthor, type Author } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window'); // Pega a largura da tela
 
 export default function ChatScreen({ navigation, route }: RootStackScreenProps<'Chat'>) {
   const insets = useSafeAreaInsets();
@@ -225,22 +227,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: FORUM_COLORS.border,
     borderRadius: 14,
+    flexShrink: 1,
+    maxWidth: SCREEN_WIDTH * 0.75,
   },
   bubbleRight: {
     backgroundColor: FORUM_COLORS.accentDark,
     borderRadius: 14,
+    flexShrink: 1,
+    maxWidth: SCREEN_WIDTH * 0.75,
   },
   bubbleTextLeft: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 20,
     color: FORUM_COLORS.title,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   bubbleTextRight: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 20,
     color: '#FFFFFF',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   timeTextLeft: { fontFamily: 'Inter_400Regular', fontSize: 10, color: FORUM_COLORS.muted },
   timeTextRight: { fontFamily: 'Inter_400Regular', fontSize: 10, color: FORUM_COLORS.accentSoft },
