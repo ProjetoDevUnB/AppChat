@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import StartChatModal from '../components/chat/StartChatModal';
 import Avatar from '../components/forum/Avatar';
 import { describeForumError, promptSignIn } from '../components/forum/feedback';
 import FlairChip from '../components/forum/FlairChip';
@@ -66,6 +67,8 @@ export default function PostDetailScreen({
   const [draft, setDraft] = useState('');
   const [isSending, setSending] = useState(false);
   const [actionError, setActionError] = useState('');
+  // Autor tocado no post ou num comentário; não-nulo abre o modal de conversa.
+  const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
 
   const user = auth.currentUser;
   // Nome e foto vêm do documento do usuário, não do Auth: é lá que o avatar
@@ -216,6 +219,19 @@ export default function PostDetailScreen({
   }
 
   const postAuthor = authors.get(post.authorId);
+  // Não faz sentido abrir chat consigo mesmo.
+  const canChatWith = (author: Author | undefined): author is Author =>
+    !!author && author.uid !== currentUid;
+
+  const handleSendMessage = (author: Author) => {
+    setSelectedAuthor(null);
+    // Sem login não dá para conversar.
+    if (!currentUid) {
+      promptSignIn(() => navigation.navigate('Login'));
+      return;
+    }
+    navigation.navigate('Chat', { userId: author.uid, userName: author.name });
+  };
 
   return (
     <KeyboardAvoidingView
@@ -249,14 +265,18 @@ export default function PostDetailScreen({
                 <FlairChip label={getFlairLabel(post.flair)} variant="badge" />
               </View>
 
-              <View style={styles.postAuthor}>
+	            <Pressable
+		            style={styles.postAuthor}
+		            onPress={() => canChatWith(postAuthor) && setSelectedAuthor(postAuthor)}
+		            disabled={!canChatWith(postAuthor)}
+		            accessibilityRole="button"
+	            >
                 <Avatar name={postAuthor?.name ?? '?'} photoUrl={postAuthor?.photoUrl} size={30} />
                 <Text style={styles.postAuthorText}>
                   {postAuthor ? `${getShortName(postAuthor.name)} • ` : ''}
                   {formatRelative(post.createdAt)}
                 </Text>
-              </View>
-
+	            </Pressable>
               <Text style={styles.postBody}>{post.body}</Text>
 
               <View style={styles.divider} />
@@ -299,7 +319,14 @@ export default function PostDetailScreen({
 
           return (
             <View style={styles.commentCard}>
-              <Avatar name={author?.name ?? '?'} photoUrl={author?.photoUrl} size={30} />
+              <Pressable
+                onPress={() => canChatWith(author) && setSelectedAuthor(author)}
+                disabled={!canChatWith(author)}
+                accessibilityRole="button"
+                accessibilityLabel={author ? `Conversar com ${author.name}` : undefined}
+              >
+                <Avatar name={author?.name ?? '?'} photoUrl={author?.photoUrl} size={30} />
+              </Pressable>
 
               <View style={styles.commentContent}>
                 <Text style={styles.commentMeta}>
@@ -343,6 +370,12 @@ export default function PostDetailScreen({
           )}
         </Pressable>
       </View>
+
+      <StartChatModal
+        author={selectedAuthor}
+        onClose={() => setSelectedAuthor(null)}
+        onSendMessage={handleSendMessage}
+      />
 
       <StatusBar style="dark" />
     </KeyboardAvoidingView>
