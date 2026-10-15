@@ -43,7 +43,7 @@ import type { RootStackScreenProps } from '../types/navigation';
 import type { UserProfile } from '../types/user';
 import { TimeoutError } from '../utils/withTimeout';
 
-const PROFILE_TAB_INDEX = 3;
+const PROFILE_TAB_INDEX = 4;
 
 // Favoritos ainda não são salvos em lugar nenhum — quando existirem,
 // este número deve vir do Firestore.
@@ -323,6 +323,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
         activeIndex={PROFILE_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'regions') navigation.navigate('Regions');
           if (key === 'search') navigation.navigate('Chats');
           if (key === 'chat') navigation.navigate('Forum');
         }}

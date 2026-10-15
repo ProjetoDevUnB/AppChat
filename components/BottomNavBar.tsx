@@ -10,6 +10,7 @@ import ChatIcon from './icons/ChatIcon';
 import HomeIcon from './icons/HomeIcon';
 import ProfileIcon from './icons/ProfileIcon';
 import SearchChatIcon from './icons/SearchChatIcon';
+import SearchIcon from './icons/SearchIcon';
 import type { IconProps } from './icons/types';
 
 
@@ -33,6 +34,7 @@ type NavItem = {
 
 const ITEMS: NavItem[] = [
   { key: 'home', label: 'Início', Icon: HomeIcon },
+  { key: 'regions', label: 'Regiões', Icon: SearchIcon },
   { key: 'search', label: 'Mensagens', Icon: SearchChatIcon },
   { key: 'chat', label: 'Conversas', Icon: ChatIcon },
   { key: 'profile', label: 'Perfil', Icon: ProfileIcon },
