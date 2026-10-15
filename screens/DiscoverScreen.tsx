@@ -81,7 +81,12 @@ export default function DiscoverScreen({ navigation }: RootStackScreenProps<'Dis
           contentContainerStyle={styles.categoryRowContent}
         >
           {CATEGORIES.map(({ key, label, Icon }) => (
-            <CategoryCard key={key} label={label} Icon={Icon} />
+            <CategoryCard
+              key={key}
+              label={label}
+              Icon={Icon}
+              onPress={() => navigation.navigate('RegionStats')}
+            />
           ))}
         </ScrollView>
 
@@ -139,6 +144,7 @@ export default function DiscoverScreen({ navigation }: RootStackScreenProps<'Dis
       <BottomNavBar
         activeIndex={0}
         onPressItem={(_index, key) => {
+          if (key === 'regions') navigation.navigate('Regions');
           if (key === 'search') navigation.navigate('Chats');
           if (key === 'chat') navigation.navigate('Forum');
           if (key === 'profile') navigation.navigate('Profile');

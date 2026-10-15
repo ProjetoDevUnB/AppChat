@@ -19,6 +19,9 @@ import SignUpScreen from './screens/SignUpScreen';
 import TopicPostsScreen from './screens/TopicPostsScreen';
 import ChatScreen from './screens/ChatScreen';
 import ChatsScreen from './screens/ChatsScreen';
+import RegionStatsScreen from './screens/RegionStatsScreen';
+import RegionsScreen from './screens/RegionsScreen';
+import RegionMapScreen from './screens/RegionMapScreen';
 import type { RootStackParamList } from './types/navigation';
 
 // Import só pelo efeito: garante que o Firebase seja inicializado no start do
@@ -52,6 +55,9 @@ const [fontsLoaded] = useFonts({
           <Stack.Screen name="CreatePost" component={CreatePostScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="Chats" component={ChatsScreen} />
+          <Stack.Screen name="RegionStats" component={RegionStatsScreen} />
+          <Stack.Screen name="Regions" component={RegionsScreen} />
+          <Stack.Screen name="RegionMap" component={RegionMapScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

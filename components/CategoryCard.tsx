@@ -10,7 +10,6 @@ import {
 import type { IconProps } from './icons/types';
 
 // Card de categoria do carrossel horizontal da tela de descoberta
-// Botões ainda não levam para lugar nenhum. 
 
 export const CATEGORY_CARD_WIDTH = 132;
 export const CATEGORY_CARD_HEIGHT = 112;

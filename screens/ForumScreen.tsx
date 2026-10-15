@@ -28,7 +28,7 @@ import { listAllPosts, summarizeTopics, type TopicSummary } from '../services/fo
 import { TOPICS, type TopicId } from '../types/forum';
 import type { RootStackScreenProps } from '../types/navigation';
 
-const CHAT_TAB_INDEX = 2;
+const CHAT_TAB_INDEX = 3;
 
 export default function ForumScreen({ navigation }: RootStackScreenProps<'Forum'>) {
   const insets = useSafeAreaInsets();
@@ -158,6 +158,7 @@ export default function ForumScreen({ navigation }: RootStackScreenProps<'Forum'
         activeIndex={CHAT_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'regions') navigation.navigate('Regions');
           if (key === 'search') navigation.navigate('Chats');
           if (key === 'profile') navigation.navigate('Profile');
         }}

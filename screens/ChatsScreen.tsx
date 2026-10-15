@@ -28,7 +28,7 @@ import { getAuthors, type Author } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
 import { formatRelative } from '../utils/relativeTime';
 
-const CHATS_TAB_INDEX = 1;
+const CHATS_TAB_INDEX = 2;
 
 export default function ChatsScreen({ navigation }: RootStackScreenProps<'Chats'>) {
   const insets = useSafeAreaInsets();
@@ -225,6 +225,7 @@ export default function ChatsScreen({ navigation }: RootStackScreenProps<'Chats'
         activeIndex={CHATS_TAB_INDEX}
         onPressItem={(_index, key) => {
           if (key === 'home') navigation.navigate('Discover');
+          if (key === 'regions') navigation.navigate('Regions');
           if (key === 'chat') navigation.navigate('Forum');
           if (key === 'profile') navigation.navigate('Profile');
         }}
