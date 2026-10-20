@@ -4,6 +4,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  GeoPoint,
   getDoc,
   getDocs,
   increment,
@@ -19,7 +20,7 @@ import {
 } from 'firebase/firestore';
 
 import { auth, db } from '../firebase';
-import type { Comment, FlairId, Post, TopicId } from '../types/forum';
+import type { Comment, Coordinate, FlairId, Post, TopicId } from '../types/forum';
 import { withTimeout } from '../utils/withTimeout';
 
 const POSTS_COLLECTION = 'posts';
@@ -65,6 +66,10 @@ function toPost(snapshot: QueryDocumentSnapshot<DocumentData>): Post {
     createdAt: toDate(data.createdAt),
     likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
     commentCount: typeof data.commentCount === 'number' ? data.commentCount : 0,
+    location:
+      data.location instanceof GeoPoint
+        ? { latitude: data.location.latitude, longitude: data.location.longitude }
+        : null,
   };
 }
 
@@ -131,6 +136,18 @@ export async function listPostsByTopic(topic: TopicId): Promise<Post[]> {
   return snapshot.docs.map(toPost).sort(byNewestFirst);
 }
 
+/**
+ * Posts da RA que foram marcados no mapa.
+ *
+ * Não existe query geográfica aqui: o recorte espacial já é o `topic` (uma RA),
+ * então basta a mesma query de `listPostsByTopic` filtrada no cliente. Um
+ * `where('location', '!=', null)` exigiria índice composto com `topic` — o
+ * mesmo passo manual que `listPostsByTopic` evita.
+ */
+export async function listMappedPostsByTopic(topic: TopicId): Promise<Post[]> {
+  return (await listPostsByTopic(topic)).filter((post) => post.location !== null);
+}
+
 /** Um post pelo id. `null` se ele foi apagado enquanto a tela estava aberta. */
 export async function getPost(postId: string): Promise<Post | null> {
   const snapshot = await withTimeout(
@@ -165,10 +182,17 @@ export type NewPost = {
   body: string;
   topic: TopicId;
   flair: FlairId;
+  location?: Coordinate | null;
 };
 
 /** Publica um post e devolve o id gerado. */
-export async function createPost({ title, body, topic, flair }: NewPost): Promise<string> {
+export async function createPost({
+  title,
+  body,
+  topic,
+  flair,
+  location,
+}: NewPost): Promise<string> {
   const uid = requireUid();
 
   const reference = await withTimeout(
@@ -181,6 +205,9 @@ export async function createPost({ title, body, topic, flair }: NewPost): Promis
       createdAt: serverTimestamp(),
       likedBy: [],
       commentCount: 0,
+      // Sem local, o campo nem é gravado: `location: null` obrigaria as regras
+      // do Firestore a aceitar dois formatos.
+      ...(location ? { location: new GeoPoint(location.latitude, location.longitude) } : {}),
     }),
     FORUM_TIMEOUT_MS,
   );

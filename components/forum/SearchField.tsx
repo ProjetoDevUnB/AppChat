@@ -15,6 +15,8 @@ type SearchFieldProps = {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  // Para buscas que vão à rede: dispara só no "buscar" do teclado, não a cada letra.
+  onSubmitEditing?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -22,6 +24,7 @@ export default function SearchField({
   value,
   onChangeText,
   placeholder = 'Pesquisar conversa...',
+  onSubmitEditing,
   style,
 }: SearchFieldProps) {
   return (
@@ -35,6 +38,7 @@ export default function SearchField({
         placeholderTextColor={FORUM_COLORS.muted}
         autoCorrect={false}
         returnKeyType="search"
+        onSubmitEditing={onSubmitEditing}
         accessibilityLabel={placeholder}
       />
     </View>

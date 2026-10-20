@@ -17,9 +17,9 @@ export type RootStackParamList = {
   CreatePost: { topicId: TopicId };
   Chat: { userId: string; userName?: string };
   Chats: undefined;
-  RegionStats: undefined;
+  RegionStats: { regionName: string };
   Regions: undefined;
-  RegionMap: undefined;
+  RegionMap: { regionName: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =

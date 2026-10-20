@@ -86,7 +86,7 @@ export default function SafetyCard({ safety, style }: SafetyCardProps) {
       <View style={styles.footer}>
         <Text style={styles.summary}>{safety.summary}</Text>
         <StatSource tone="muted">{safety.source}</StatSource>
-        <StatSource style={styles.note}>{safety.note}</StatSource>
+        {safety.note ? <StatSource style={styles.note}>{safety.note}</StatSource> : null}
       </View>
     </StatCard>
   );
