@@ -17,10 +17,11 @@ import MobilityCard from '../components/region/MobilityCard';
 import RegionMap from '../components/region/RegionMap';
 import SafetyCard from '../components/region/SafetyCard';
 import { REGION_COLORS } from '../components/region/theme';
-import { ASA_NORTE_STATS } from '../data/regionStats';
+import { getRegionStats } from '../data/regionStats';
+import { useMappedPosts } from '../hooks/useMappedPosts';
 import type { RootStackScreenProps } from '../types/navigation';
 
-export default function RegionStatsScreen({ navigation }: RootStackScreenProps<'RegionStats'>) {
+export default function RegionStatsScreen({ navigation, route }: RootStackScreenProps<'RegionStats'>) {
   const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -28,11 +29,14 @@ export default function RegionStatsScreen({ navigation }: RootStackScreenProps<'
     Inter_700Bold,
   });
 
-  if (!fontsLoaded) {
+  const region = getRegionStats(route.params.regionName);
+  const mappedPosts = useMappedPosts(region?.forumTopic);
+
+  if (!fontsLoaded || !region) {
     return null;
   }
 
-  const region = ASA_NORTE_STATS;
+  const { forumTopic } = region;
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -62,21 +66,24 @@ export default function RegionStatsScreen({ navigation }: RootStackScreenProps<'
           <RegionMap
             name={region.name}
             map={region.map}
-            onPress={() => navigation.navigate('RegionMap')}
+            posts={mappedPosts}
+            onPress={() => navigation.navigate('RegionMap', { regionName: region.name })}
           />
         </View>
 
-        <View style={styles.forumSection}>
-          <ForumHighlights
-            topic={region.forumTopic}
-            regionName={region.name}
-            onPressPost={(post) =>
-              navigation.navigate('PostDetail', { postId: post.id, topicId: post.topic })
-            }
-            onPressSeeAll={() => navigation.navigate('TopicPosts', { topicId: region.forumTopic })}
-            onPressSignIn={() => navigation.navigate('Login')}
-          />
-        </View>
+        {forumTopic ? (
+          <View style={styles.forumSection}>
+            <ForumHighlights
+              topic={forumTopic}
+              regionName={region.name}
+              onPressPost={(post) =>
+                navigation.navigate('PostDetail', { postId: post.id, topicId: post.topic })
+              }
+              onPressSeeAll={() => navigation.navigate('TopicPosts', { topicId: forumTopic })}
+              onPressSignIn={() => navigation.navigate('Login')}
+            />
+          </View>
+        ) : null}
       </ScrollView>
 
       <StatusBar style="dark" />

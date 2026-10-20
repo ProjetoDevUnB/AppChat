@@ -26,6 +26,7 @@ import Avatar from '../components/forum/Avatar';
 import { describeForumError, promptSignIn } from '../components/forum/feedback';
 import FlairChip from '../components/forum/FlairChip';
 import ForumHeader from '../components/forum/ForumHeader';
+import PostLocationSection from '../components/forum/PostLocationSection';
 import { FORUM_COLORS } from '../components/forum/theme';
 import CommentIcon from '../components/icons/CommentIcon';
 import HeartIcon from '../components/icons/HeartIcon';
@@ -278,6 +279,8 @@ export default function PostDetailScreen({
                 </Text>
 	            </Pressable>
               <Text style={styles.postBody}>{post.body}</Text>
+
+              <PostLocationSection key={post.id} post={post} />
 
               <View style={styles.divider} />
 

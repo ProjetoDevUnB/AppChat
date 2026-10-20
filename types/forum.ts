@@ -23,6 +23,8 @@ export const FLAIRS = [
 export type TopicId = (typeof TOPICS)[number]['id'];
 export type FlairId = (typeof FLAIRS)[number]['id'];
 
+export type Coordinate = { latitude: number; longitude: number };
+
 export type Post = {
   id: string;
   title: string;
@@ -35,6 +37,9 @@ export type Post = {
   createdAt: Date | null;
   likedBy: string[];
   commentCount: number;
+  // Ponto marcado no mapa da RA ao publicar. Opcional: posts sem local (e os
+  // anteriores a esta funcionalidade) simplesmente não aparecem no mapa.
+  location: Coordinate | null;
 };
 
 export type Comment = {

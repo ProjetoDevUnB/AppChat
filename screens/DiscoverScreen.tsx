@@ -85,7 +85,7 @@ export default function DiscoverScreen({ navigation }: RootStackScreenProps<'Dis
               key={key}
               label={label}
               Icon={Icon}
-              onPress={() => navigation.navigate('RegionStats')}
+              onPress={() => navigation.navigate('RegionStats', { regionName: 'Asa Norte' })}
             />
           ))}
         </ScrollView>
