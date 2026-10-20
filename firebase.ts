@@ -17,12 +17,12 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 let auth: Auth;
 try {
-  // getAuth uses durable browser storage on web; native requires AsyncStorage.
+  // Na web, getAuth usa armazenamento persistente do navegador; no celular, é necessário usar AsyncStorage.
   auth = Platform.OS === 'web' ? getAuth(app) : initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
 } catch (error) {
-  // Fast Refresh can evaluate this module after Auth has been initialized.
+  // O Fast Refresh pode executar este módulo novamente após a inicialização do Auth.
   if (!(error instanceof FirebaseError) || error.code !== 'auth/already-initialized') {
     throw error;
   }

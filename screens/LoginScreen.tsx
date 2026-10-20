@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
   const loginPending = useRef(false);
 
   useEffect(() => {
-    // Logging in again as the current user does not fire a new auth event.
+    // Entrar novamente com o usuário atual não dispara outro evento de autenticação.
     if (auth.currentUser) {
       navigation.reset({ index: 0, routes: [{ name: 'Discover' }] });
     }
@@ -44,12 +44,12 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
       await withTimeout(configureLoginPersistence(auth, rememberMe), 20000);
       const { user } = await withTimeout(signInWithEmailAndPassword(auth, email.trim(), password), 20000);
 
-      // Profile maintenance must not hold up a successful login.
+      // A atualização do perfil não deve atrasar a entrada após a autenticação.
       void ensureUserProfile(user).catch((error: any) => {
         console.warn('[login] falha ao completar o perfil:', error?.code ?? error);
       });
 
-      // App switches to Discover when Firebase publishes the signed-in user.
+      // O App abre Discover quando o Firebase notifica que o usuário está autenticado.
     } catch (error: any) {
       if (error instanceof TimeoutError) {
         setErrorMessage('O login demorou mais que o esperado. Verifique sua conexão e tente novamente.');

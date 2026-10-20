@@ -233,7 +233,7 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
 
     // Nomes e fotos da conta anterior não podem vazar para a próxima sessão.
     clearAuthorCache();
-    // App clears the protected navigation history when Firebase signs out.
+    // O App limpa o histórico das telas protegidas quando o Firebase encerra a sessão.
   };
 
   const accountItems: MenuItem[] = [
