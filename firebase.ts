@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initializeApp } from 'firebase/app';
+import { FirebaseError, getApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, getAuth, getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
@@ -13,15 +13,20 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 let auth: Auth;
-if (Platform.OS === 'web') {
-  auth = getAuth(app);
-} else {
-  auth = initializeAuth(app, {
+try {
+  // getAuth uses durable browser storage on web; native requires AsyncStorage.
+  auth = Platform.OS === 'web' ? getAuth(app) : initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
   });
+} catch (error) {
+  // Fast Refresh can evaluate this module after Auth has been initialized.
+  if (!(error instanceof FirebaseError) || error.code !== 'auth/already-initialized') {
+    throw error;
+  }
+  auth = getAuth(app);
 }
 
 const db = getFirestore(app);

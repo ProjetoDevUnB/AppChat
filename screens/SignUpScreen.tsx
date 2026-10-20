@@ -62,7 +62,7 @@ export default function SignUpScreen({ navigation }: RootStackScreenProps<'SignU
       // O service já traz o próprio timeout.
       await createUserProfile(user, trimmedName);
 
-      navigation.navigate('Discover');
+      // App switches to Discover when Firebase publishes the signed-in user.
     } catch (error: any) {
 
       console.warn('[signup] falha ao criar conta:', error?.code ?? error);

@@ -7,7 +7,10 @@ import {
   Inter_500Medium,
   Inter_700Bold, useFonts
 } from '@expo-google-fonts/inter';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { auth } from './firebase';
 import CreatePostScreen from './screens/CreatePostScreen';
 import DiscoverScreen from './screens/DiscoverScreen';
 import ForumScreen from './screens/ForumScreen';
@@ -24,40 +27,53 @@ import RegionsScreen from './screens/RegionsScreen';
 import RegionMapScreen from './screens/RegionMapScreen';
 import type { RootStackParamList } from './types/navigation';
 
-// Import só pelo efeito: garante que o Firebase seja inicializado no start do
-// app, e não por acaso na primeira tela que importar `./firebase`.
-import './firebase';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-const [fontsLoaded] = useFonts({
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => onAuthStateChanged(auth, (restoredUser) => {
+    setUser(restoredUser);
+    setAuthReady(true);
+  }), []);
+
+  const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#FAFBF8' }} />; // Tela branca durante carregamento da fonte
+  if (!fontsLoaded || !authReady) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAFBF8', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator accessibilityLabel="Carregando sessão" />
+      </View>
+    );
   }
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+      <NavigationContainer key={user?.uid ?? 'guest'}>
+        <Stack.Navigator initialRouteName={user ? 'Discover' : 'Home'} screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Discover" component={DiscoverScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="Forum" component={ForumScreen} />
-          <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
-          <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-          <Stack.Screen name="CreatePost" component={CreatePostScreen} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
-          <Stack.Screen name="Chats" component={ChatsScreen} />
-          <Stack.Screen name="RegionStats" component={RegionStatsScreen} />
-          <Stack.Screen name="Regions" component={RegionsScreen} />
-          <Stack.Screen name="RegionMap" component={RegionMapScreen} />
+          {user && (
+            <Stack.Group>
+              <Stack.Screen name="Discover" component={DiscoverScreen} />
+              <Stack.Screen name="Profile" component={ProfileScreen} />
+              <Stack.Screen name="Forum" component={ForumScreen} />
+              <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
+              <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+              <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+              <Stack.Screen name="Chat" component={ChatScreen} />
+              <Stack.Screen name="Chats" component={ChatsScreen} />
+              <Stack.Screen name="RegionStats" component={RegionStatsScreen} />
+              <Stack.Screen name="Regions" component={RegionsScreen} />
+              <Stack.Screen name="RegionMap" component={RegionMapScreen} />
+            </Stack.Group>
+          )}
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
