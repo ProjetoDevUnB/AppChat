@@ -58,10 +58,9 @@ export default function CreatePostScreen({
   // é salvo, e o `displayName` pode estar desatualizado.
   const currentAuthor = useCurrentAuthor();
 
-  // Marcar local precisa do contorno da RA e do mapa nativo (sem equivalente
-  // interativo na web), então o campo some quando falta um dos dois.
+  // Marcar local exige o contorno da RA para validar o ponto escolhido.
   const region = getRegionStatsByTopic(topicId);
-  const canPickLocation = region !== undefined && Platform.OS !== 'web';
+  const canPickLocation = region !== undefined;
 
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && flair !== null;
 

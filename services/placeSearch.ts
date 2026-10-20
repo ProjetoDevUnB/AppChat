@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { getMapRegion, isInsideOutline } from '../data/regionStats';
 import type { Coordinate } from '../types/forum';
 
@@ -60,7 +62,10 @@ export async function searchPlaces(text: string, outline: Coordinate[]): Promise
 
   try {
     const response = await fetch(`${NOMINATIM_URL}?${params}`, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      // No navegador a identificação vem do Referer; User-Agent é controlado por ele.
+      headers: Platform.OS === 'web'
+        ? { Accept: 'application/json' }
+        : { 'User-Agent': USER_AGENT, Accept: 'application/json' },
       signal: controller.signal,
     });
     if (!response.ok) {
