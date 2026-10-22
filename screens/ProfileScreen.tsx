@@ -245,6 +245,12 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
     { key: 'privacidade', label: 'Privacidade', icon: { xml: lockXml, width: 12, height: 15.75 } },
     { key: 'ajuda', label: 'Ajuda e suporte', icon: { xml: helpXml, width: 15, height: 15 } },
     {
+      key: 'sobre',
+      label: 'Sobre o aplicativo',
+      icon: { xml: helpXml, width: 15, height: 15 },
+      onPress: () => navigation.navigate('About'),
+    },
+    {
       key: 'sair',
       label: 'Sair',
       icon: { xml: logoutXml, width: 13.5, height: 13.5 },

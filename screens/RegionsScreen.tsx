@@ -23,7 +23,6 @@ import { normalizeForSearch } from '../components/forum/feedback';
 import { filterXml, regionSearchXml } from '../components/icons/regionIconsXml';
 import RegionCard from '../components/region/RegionCard';
 import { REGION_CARDS } from '../data/regionCards';
-import { ASA_NORTE_STATS } from '../data/regionStats';
 import type { RootStackScreenProps } from '../types/navigation';
 
 const REGIONS_TAB_INDEX = 1;
@@ -107,11 +106,7 @@ export default function RegionsScreen({ navigation }: RootStackScreenProps<'Regi
           <RegionCard
             region={item}
             style={{ width: cardWidth }}
-            onPress={
-              item.name === ASA_NORTE_STATS.name
-                ? () => navigation.navigate('RegionStats')
-                : undefined
-            }
+            onPress={() => navigation.navigate('RegionStats', { regionName: item.name })}
           />
         )}
       />

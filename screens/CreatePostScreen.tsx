@@ -10,6 +10,7 @@ import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,12 +22,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { describeForumError, promptSignIn } from '../components/forum/feedback';
 import FlairChip from '../components/forum/FlairChip';
 import ForumHeader from '../components/forum/ForumHeader';
+import LocationPickerModal from '../components/forum/LocationPickerModal';
 import { FORUM_COLORS } from '../components/forum/theme';
 import PillButton from '../components/PillButton';
+import { getRegionStatsByTopic } from '../data/regionStats';
 import { auth } from '../firebase';
 import { useCurrentAuthor } from '../hooks/useCurrentAuthor';
 import { createPost, MAX_BODY_LENGTH, MAX_TITLE_LENGTH } from '../services/forum';
-import { FLAIRS, getTopicLabel, type FlairId } from '../types/forum';
+import { FLAIRS, getTopicLabel, type Coordinate, type FlairId } from '../types/forum';
 import type { RootStackScreenProps } from '../types/navigation';
 
 export default function CreatePostScreen({
@@ -45,6 +48,8 @@ export default function CreatePostScreen({
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [flair, setFlair] = useState<FlairId | null>(null);
+  const [location, setLocation] = useState<Coordinate | null>(null);
+  const [isPickingLocation, setPickingLocation] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -52,6 +57,10 @@ export default function CreatePostScreen({
   // Nome e foto vêm do documento do usuário, não do Auth: é lá que o avatar
   // é salvo, e o `displayName` pode estar desatualizado.
   const currentAuthor = useCurrentAuthor();
+
+  // Marcar local exige o contorno da RA para validar o ponto escolhido.
+  const region = getRegionStatsByTopic(topicId);
+  const canPickLocation = region !== undefined;
 
   const canSubmit = title.trim().length > 0 && body.trim().length > 0 && flair !== null;
 
@@ -67,7 +76,7 @@ export default function CreatePostScreen({
     setError('');
 
     try {
-      await createPost({ title, body, topic: topicId, flair });
+      await createPost({ title, body, topic: topicId, flair, location });
       // A lista da RA recarrega no useFocusEffect ao receber o foco de volta.
       navigation.goBack();
     } catch (submitError: any) {
@@ -160,6 +169,32 @@ export default function CreatePostScreen({
           </View>
         </View>
 
+        {canPickLocation ? (
+          <View style={styles.field}>
+            <Text style={styles.label}>Local (opcional)</Text>
+            {location ? (
+              <View style={styles.locationRow}>
+                <Text style={styles.locationText}>Local marcado no mapa</Text>
+                <Pressable onPress={() => setPickingLocation(true)} accessibilityRole="button" hitSlop={8}>
+                  <Text style={styles.locationAction}>Alterar</Text>
+                </Pressable>
+                <Pressable onPress={() => setLocation(null)} accessibilityRole="button" hitSlop={8}>
+                  <Text style={styles.locationAction}>Remover</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                style={({ pressed }) => [styles.input, styles.locationButton, pressed && styles.pressed]}
+                onPress={() => setPickingLocation(true)}
+                accessibilityRole="button"
+                accessibilityHint="Abre o mapa da região para marcar onde a conversa acontece"
+              >
+                <Text style={styles.locationAction}>Marcar no mapa</Text>
+              </Pressable>
+            )}
+          </View>
+        ) : null}
+
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <PillButton
@@ -170,6 +205,20 @@ export default function CreatePostScreen({
           textStyle={styles.submitText}
         />
       </ScrollView>
+
+      {canPickLocation ? (
+        <LocationPickerModal
+          visible={isPickingLocation}
+          regionName={region.name}
+          map={region.map}
+          value={location}
+          onConfirm={(picked) => {
+            setLocation(picked);
+            setPickingLocation(false);
+          }}
+          onClose={() => setPickingLocation(false)}
+        />
+      ) : null}
 
       <StatusBar style="dark" />
     </KeyboardAvoidingView>
@@ -240,6 +289,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+  },
+  locationRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  locationText: {
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    color: FORUM_COLORS.title,
+  },
+  locationButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationAction: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    lineHeight: 20,
+    color: FORUM_COLORS.accentDark,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   error: {
     marginTop: 16,

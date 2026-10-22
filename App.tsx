@@ -18,6 +18,7 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import PostDetailScreen from './screens/PostDetailScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import AboutScreen from './screens/AboutScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import TopicPostsScreen from './screens/TopicPostsScreen';
 import ChatScreen from './screens/ChatScreen';
@@ -59,21 +60,18 @@ export default function App() {
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
-          {user && (
-            <Stack.Group>
-              <Stack.Screen name="Discover" component={DiscoverScreen} />
-              <Stack.Screen name="Profile" component={ProfileScreen} />
-              <Stack.Screen name="Forum" component={ForumScreen} />
-              <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
-              <Stack.Screen name="PostDetail" component={PostDetailScreen} />
-              <Stack.Screen name="CreatePost" component={CreatePostScreen} />
-              <Stack.Screen name="Chat" component={ChatScreen} />
-              <Stack.Screen name="Chats" component={ChatsScreen} />
-              <Stack.Screen name="RegionStats" component={RegionStatsScreen} />
-              <Stack.Screen name="Regions" component={RegionsScreen} />
-              <Stack.Screen name="RegionMap" component={RegionMapScreen} />
-            </Stack.Group>
-          )}
+          <Stack.Screen name="Discover" component={DiscoverScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="Forum" component={ForumScreen} />
+          <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
+          <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+          <Stack.Screen name="CreatePost" component={CreatePostScreen} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Chats" component={ChatsScreen} />
+          <Stack.Screen name="RegionStats" component={RegionStatsScreen} />
+          <Stack.Screen name="Regions" component={RegionsScreen} />
+          <Stack.Screen name="RegionMap" component={RegionMapScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

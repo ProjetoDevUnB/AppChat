@@ -11,15 +11,16 @@ export type RootStackParamList = {
   SignUp: undefined;
   Login: undefined;
   Profile: undefined;
+  About: undefined;
   Forum: undefined;
   TopicPosts: { topicId: TopicId };
   PostDetail: { postId: string; topicId: TopicId };
   CreatePost: { topicId: TopicId };
   Chat: { userId: string; userName?: string };
   Chats: undefined;
-  RegionStats: undefined;
+  RegionStats: { regionName: string };
   Regions: undefined;
-  RegionMap: undefined;
+  RegionMap: { regionName: string };
 };
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =
