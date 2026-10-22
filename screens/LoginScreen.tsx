@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
@@ -9,46 +10,65 @@ import FormField from '../components/FormField';
 import PillButton from '../components/PillButton';
 import SocialButton from '../components/SocialButton';
 import { ensureUserProfile } from '../services/userProfile';
+import { configureLoginPersistence } from '../services/authPersistence';
+import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 import type { RootStackScreenProps } from '../types/navigation';
 export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'>) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const loginPending = useRef(false);
+
+  useEffect(() => {
+    // Entrar novamente com o usuário atual não dispara outro evento de autenticação.
+    if (auth.currentUser) {
+      navigation.reset({ index: 0, routes: [{ name: 'Discover' }] });
+    }
+  }, [navigation]);
 
   const handleLogin = async () => {
+    if (loginPending.current) return;
     if (!email || !password) {
       setErrorMessage('Por favor, preencha e-mail e senha.');
       return;
     }
 
+    loginPending.current = true;
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      await withTimeout(configureLoginPersistence(auth, rememberMe), 20000);
+      const { user } = await withTimeout(signInWithEmailAndPassword(auth, email.trim(), password), 20000);
 
-      try {
-        await ensureUserProfile(user);
-      } catch (error: any) {
+      // A atualização do perfil não deve atrasar a entrada após a autenticação.
+      void ensureUserProfile(user).catch((error: any) => {
         console.warn('[login] falha ao completar o perfil:', error?.code ?? error);
-      }
+      });
 
-      navigation.navigate('Discover');
+      // O App abre Discover quando o Firebase notifica que o usuário está autenticado.
     } catch (error: any) {
-      if (
+      if (error instanceof TimeoutError) {
+        setErrorMessage('O login demorou mais que o esperado. Verifique sua conexão e tente novamente.');
+      } else if (
         error.code === 'auth/invalid-email' || 
         error.code === 'auth/user-not-found' || 
         error.code === 'auth/wrong-password' || 
         error.code === 'auth/invalid-credential'
       ) {
         setErrorMessage('E-mail ou senha incorretos.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setErrorMessage('Não foi possível conectar. Verifique sua conexão e tente novamente.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrorMessage('Muitas tentativas. Aguarde um pouco e tente novamente.');
       } else {
         setErrorMessage('Ocorreu um erro ao tentar fazer login. Tente novamente.');
       }
     } finally {
+      loginPending.current = false;
       setIsLoading(false);
     }
   };
@@ -95,15 +115,28 @@ export default function LoginScreen({ navigation }: RootStackScreenProps<'Login'
 
         <Pressable
           style={styles.termsRow}
+          accessibilityRole="checkbox"
+          accessibilityLabel="Lembrar de mim"
+          accessibilityState={{ checked: rememberMe, disabled: isLoading }}
+          disabled={isLoading}
           onPress={() => setRememberMe((prev) => !prev)}
         >
-          <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
+          <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+            {rememberMe && <Feather name="check" size={14} color="#FFFFFF" />}
+          </View>
           <Text style={styles.rememberMeText}>Lembrar de mim</Text>
         </Pressable>
 
         {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
+          <Text accessibilityRole="alert" style={styles.errorText}>{errorMessage}</Text>
         ) : null}
+
+        {isLoading && (
+          <View accessibilityLiveRegion="polite" style={styles.loadingRow}>
+            <ActivityIndicator color="#832D51" />
+            <Text>Entrando na sua conta...</Text>
+          </View>
+        )}
 
         <PillButton
           label={isLoading ? "Entrando..." : "Entrar"}
@@ -190,14 +223,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   checkbox: {
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#000000',
     borderRadius: 4,
   },
   checkboxChecked: {
     backgroundColor: '#000000',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   rememberMeText: {
     flex: 1,

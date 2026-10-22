@@ -228,11 +228,12 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
       await signOut(auth);
     } catch (error: any) {
       console.warn('[profile] falha ao sair:', error?.code ?? error);
+      return;
     }
 
     // Nomes e fotos da conta anterior não podem vazar para a próxima sessão.
     clearAuthorCache();
-    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    // O App limpa o histórico das telas protegidas quando o Firebase encerra a sessão.
   };
 
   const accountItems: MenuItem[] = [
