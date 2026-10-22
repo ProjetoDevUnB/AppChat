@@ -15,6 +15,7 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import PostDetailScreen from './screens/PostDetailScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import AboutScreen from './screens/AboutScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import TopicPostsScreen from './screens/TopicPostsScreen';
 import ChatScreen from './screens/ChatScreen';
@@ -49,6 +50,7 @@ const [fontsLoaded] = useFonts({
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Discover" component={DiscoverScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Forum" component={ForumScreen} />
           <Stack.Screen name="TopicPosts" component={TopicPostsScreen} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />

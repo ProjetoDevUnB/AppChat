@@ -11,6 +11,7 @@ export type RootStackParamList = {
   SignUp: undefined;
   Login: undefined;
   Profile: undefined;
+  About: undefined;
   Forum: undefined;
   TopicPosts: { topicId: TopicId };
   PostDetail: { postId: string; topicId: TopicId };
