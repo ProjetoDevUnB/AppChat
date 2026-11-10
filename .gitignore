@@ -23,6 +23,7 @@ expo-env.d.ts
 
 # debug
 npm-debug.*
+firebase-debug*.log
 yarn-debug.*
 yarn-error.*
 
@@ -31,7 +32,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -40,5 +43,8 @@ yarn-error.*
 /ios
 /android
 
+# Firebase local files and service credentials
+.firebase/
 google-services.json
-.env
+serviceAccountKey*.json
+*-firebase-adminsdk-*.json
