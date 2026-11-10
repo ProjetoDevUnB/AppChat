@@ -11,6 +11,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './firebase';
+import { initializeNotifications } from './services/notifications';
 import CreatePostScreen from './screens/CreatePostScreen';
 import DiscoverScreen from './screens/DiscoverScreen';
 import ForumScreen from './screens/ForumScreen';
@@ -33,6 +34,12 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    void initializeNotifications().catch(() => {
+      console.warn('Não foi possível preparar o canal de notificações. O botão de teste tentará novamente.');
+    });
+  }, []);
 
   useEffect(() => onAuthStateChanged(auth, (restoredUser) => {
     setUser(restoredUser);

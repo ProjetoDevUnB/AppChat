@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BackIcon from '../components/icons/BackIcon';
+import { describeNotificationError, NotificationSetupError } from '../services/notificationErrors';
+import { notificationUnavailableReason, sendTestNotification, supportsFcmNotifications } from '../services/notifications';
 import type { RootStackScreenProps } from '../types/navigation';
 
 const DEVELOPERS = [
@@ -49,6 +51,37 @@ function DeveloperAvatar({ github, initials, name }: typeof DEVELOPERS[number]) 
 export default function AboutScreen({ navigation }: RootStackScreenProps<'About'>) {
   const insets = useSafeAreaInsets();
   const [linkError, setLinkError] = useState('');
+  const [testingNotification, setTestingNotification] = useState(false);
+  const notificationInFlight = useRef(false);
+  const [notificationFeedback, setNotificationFeedback] = useState('');
+  const [notificationDenied, setNotificationDenied] = useState(false);
+
+  const testNotification = async () => {
+    if (notificationInFlight.current || !supportsFcmNotifications) return;
+    notificationInFlight.current = true;
+    setTestingNotification(true);
+    setNotificationFeedback('');
+    setNotificationDenied(false);
+
+    try {
+      await sendTestNotification();
+      setNotificationFeedback('O FCM aceitou o envio do teste. Confira as notificações do aparelho.');
+    } catch (error) {
+      setNotificationDenied(error instanceof NotificationSetupError && error.code === 'permission-denied');
+      setNotificationFeedback(describeNotificationError(error));
+    } finally {
+      notificationInFlight.current = false;
+      setTestingNotification(false);
+    }
+  };
+
+  const openNotificationSettings = async () => {
+    try {
+      await Linking.openSettings();
+    } catch {
+      setNotificationFeedback('Abra as configurações do aparelho e permita as notificações para este aplicativo.');
+    }
+  };
 
   const openLink = async (url: string) => {
     setLinkError('');
@@ -89,6 +122,45 @@ export default function AboutScreen({ navigation }: RootStackScreenProps<'About'
           <Text style={styles.body}>
             O aplicativo é fornecido “como está”, sem qualquer tipo de garantia, expressa ou implícita, incluindo garantias de funcionamento, disponibilidade, precisão das informações ou adequação a uma finalidade específica. O uso é por sua conta e risco, observados os direitos previstos na legislação aplicável.
           </Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.noticeHeading}>
+            <Ionicons name="notifications-outline" size={22} color="#832D51" />
+            <Text style={styles.noticeTitle} accessibilityRole="header">Notificação de teste</Text>
+          </View>
+          <Text style={styles.body}>
+            Toque no botão para receber uma notificação de teste enviada pelo servidor.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.link,
+              (pressed || testingNotification || !supportsFcmNotifications) && styles.pressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: testingNotification || !supportsFcmNotifications, busy: testingNotification }}
+            disabled={testingNotification || !supportsFcmNotifications}
+            onPress={() => void testNotification()}
+          >
+            <Text style={styles.linkText}>
+              {testingNotification ? 'Enviando…' : 'Testar notificação'}
+            </Text>
+          </Pressable>
+          {!supportsFcmNotifications && (
+            <Text style={styles.body}>{notificationUnavailableReason}</Text>
+          )}
+          {notificationFeedback ? (
+            <Text style={styles.body} accessibilityLiveRegion="polite">{notificationFeedback}</Text>
+          ) : null}
+          {notificationDenied && (
+            <Pressable
+              style={({ pressed }) => [styles.link, pressed && styles.pressed]}
+              accessibilityRole="button"
+              onPress={() => void openNotificationSettings()}
+            >
+              <Text style={styles.linkText}>Abrir configurações</Text>
+            </Pressable>
+          )}
         </View>
 
         <Text style={styles.sectionTitle} accessibilityRole="header">Desenvolvedores</Text>
