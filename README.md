@@ -1,5 +1,11 @@
 # AppChat
 
+## Build Android e releases automáticas
+
+O workflow [Android APK Release](.github/workflows/android-release.yml) gera um APK assinado pelo EAS a cada push/merge na `main` e o anexa a uma prerelease no GitHub Releases. A configuração inicial das variáveis Firebase, do arquivo Android, do Google Maps, da assinatura e do `EXPO_TOKEN` está no [guia de build e publicação](docs/android-release.md).
+
+O `serviceAccountKey.json` não é necessário nesse pipeline: as notificações usam a identidade da Cloud Function. O projeto permanece no Expo SDK 54.
+
 ## Notificação de teste via FCM
 
 O app mantém `expo-notifications`. No Android, o botão **Perfil → Sobre o aplicativo → Testar notificação** solicita permissão, obtém o token nativo com `getDevicePushTokenAsync()` e chama a Cloud Function autenticada `sendFcmTestNotification`. A função usa Firebase Admin SDK para enviar diretamente ao FCM, sem Expo Push Service.

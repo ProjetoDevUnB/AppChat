@@ -13,6 +13,8 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
+credentials.json
 *.p8
 *.p12
 *.key
@@ -48,3 +50,7 @@ yarn-error.*
 google-services.json
 serviceAccountKey*.json
 *-firebase-adminsdk-*.json
+
+# Android release artifacts
+*.apk
+*.aab

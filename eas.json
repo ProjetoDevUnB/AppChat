@@ -1,21 +1,37 @@
 {
-    "build": {
-	"preview": {
-	    "android": {
-		"buildType": "apk"
-	    }
-	},
-	"preview2": {
-	    "android": {
-		"gradleCommand": ":app:assembleRelease"
-	    }
-	},
-	"preview3": {
-	    "developmentClient": true
-	},
-	"preview4": {
-	    "distribution": "internal"
-	},
-	"production": {}
+  "cli": {
+    "version": ">= 27.7.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "preview4": {
+      "distribution": "internal"
+    },
+    "production": {
+      "environment": "production"
+    },
+    "release": {
+      "extends": "production",
+      "distribution": "internal",
+      "credentialsSource": "remote",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      }
     }
+  }
 }

@@ -40,7 +40,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/validate-android-build.cjs",
+    "test:build-config": "node --test scripts/validate-android-build.test.cjs",
+    "eas-build-post-install": "node scripts/validate-android-build.cjs"
   },
   "private": true,
   "devDependencies": {

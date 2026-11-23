@@ -1,0 +1,122 @@
+name: Android APK Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Sem cancelamento/agrupamento: cada push deve poder concluir seu próprio APK.
+jobs:
+  android-release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      CI: '1'
+      EAS_CLI_VERSION: '27.7.2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Check Expo token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo '::error::Configure o repository secret EXPO_TOKEN antes de executar o workflow.'
+            exit 1
+          fi
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Check TypeScript
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test build configuration validation
+        run: npm run test:build-config
+
+      - name: Install backend dependencies
+        run: npm --prefix functions ci
+
+      - name: Check backend syntax
+        run: npm --prefix functions run check
+
+      - name: Test notifications backend
+        run: npm --prefix functions test
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: ${{ env.EAS_CLI_VERSION }}
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
+
+      # As variáveis production e o File GOOGLE_SERVICES_JSON são injetados no
+      # worker EAS. Secrets do GitHub não são encaminhados automaticamente a ele.
+      - name: Build signed APK on EAS and wait
+        run: |
+          eas build --platform android --profile release --non-interactive --wait --json \
+            > "$RUNNER_TEMP/eas-build.json"
+
+      - name: Download APK and generate checksum
+        id: apk
+        run: |
+          set -euo pipefail
+          jq -e 'length == 1 and .[0].status == "FINISHED"' "$RUNNER_TEMP/eas-build.json" > /dev/null
+          artifact_url="$(jq -er '.[0].artifacts.applicationArchiveUrl // .[0].artifacts.buildUrl' "$RUNNER_TEMP/eas-build.json")"
+          apk="AppChat-${GITHUB_SHA:0:12}.apk"
+          mkdir -p "$RUNNER_TEMP/android-release"
+          cd "$RUNNER_TEMP/android-release"
+          curl --fail --location --silent --show-error --retry 3 "$artifact_url" --output "$apk"
+          unzip -t "$apk" > /dev/null
+          sha256sum "$apk" > "$apk.sha256"
+          echo "filename=$apk" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          APK_FILENAME: ${{ steps.apk.outputs.filename }}
+        run: |
+          set -euo pipefail
+          tag="apk-${GITHUB_SHA}"
+          apk="$RUNNER_TEMP/android-release/$APK_FILENAME"
+          notes="$RUNNER_TEMP/android-release-notes.md"
+          cat > "$notes" <<EOF
+          APK Android assinado, gerado automaticamente a partir da main.
+
+          Commit: ${GITHUB_SHA}
+          Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+
+          Baixe o arquivo .apk para instalar. O arquivo .sha256 permite conferir sua integridade.
+          EOF
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "$apk" "$apk.sha256" --clobber
+          else
+            gh release create "$tag" "$apk" "$apk.sha256" \
+              --target "$GITHUB_SHA" \
+              --title "AppChat APK ${GITHUB_SHA:0:12}" \
+              --notes-file "$notes" \
+              --prerelease \
+              --latest=false
+          fi
