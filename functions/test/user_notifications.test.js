@@ -2,7 +2,13 @@ const assert = require('node:assert/strict');
 const { test, beforeEach, afterEach, mock } = require('node:test');
 
 process.env.GCLOUD_PROJECT = 'demo-mapeei';
-const { registerDeviceToken, unregisterDeviceToken, sendNotificationToUser } = require('../index');
+const {
+  registerDeviceToken,
+  unregisterDeviceToken,
+  onChatMessageCreated,
+  onForumCommentCreated,
+  onForumPostUpdated,
+} = require('../index');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 
@@ -18,6 +24,13 @@ beforeEach(() => {
   storedData = {
     [`users/${recipientId}`]: {
       fcmTokens: [token, 'another-device-token-12345'],
+    },
+    'chats/chat_123': {
+      participants: [validUser.uid, recipientId],
+    },
+    'posts/post_abc': {
+      authorId: recipientId,
+      likedBy: [],
     },
   };
 
@@ -97,86 +110,103 @@ test('unregisterDeviceToken: remove token com sucesso', async () => {
   assert.deepEqual(result, { success: true });
 });
 
-test('sendNotificationToUser: recusa chamadas sem autenticação', async () => {
-  await assert.rejects(
-    sendNotificationToUser.run({
-      data: { recipientUserId: recipientId, title: 'Chat', body: 'Nova mensagem' },
-    }),
-    { code: 'unauthenticated' },
-  );
-});
+test('onChatMessageCreated: envia notificação no chat ao outro participante', async () => {
+  const event = {
+    params: { chatId: 'chat_123', messageId: 'msg_001' },
+    data: {
+      data: () => ({ authorId: validUser.uid, text: 'Olá!' }),
+    },
+  };
 
-test('sendNotificationToUser: recusa dados incompletos', async () => {
-  await assert.rejects(
-    sendNotificationToUser.run({
-      auth: validUser,
-      data: { recipientUserId: '', title: 'Chat', body: 'Mensagem' },
-    }),
-    { code: 'invalid-argument' },
-  );
-  await assert.rejects(
-    sendNotificationToUser.run({
-      auth: validUser,
-      data: { recipientUserId: recipientId, title: '', body: 'Mensagem' },
-    }),
-    { code: 'invalid-argument' },
-  );
-});
+  const result = await onChatMessageCreated.run(event);
+  assert.equal(result.sent, 2);
+  assert.equal(multicastMock.mock.callCount(), 1);
 
-test('sendNotificationToUser: ignora envio para si mesmo', async () => {
-  const result = await sendNotificationToUser.run({
-    auth: validUser,
-    data: { recipientUserId: validUser.uid, title: 'Chat', body: 'Mensagem' },
+  const callArg = multicastMock.mock.calls[0].arguments[0];
+  assert.equal(callArg.tokens.length, 2);
+  assert.equal(callArg.notification.title, 'mapeei — Chat');
+  assert.equal(callArg.notification.body, 'Você recebeu uma nova mensagem');
+  assert.deepEqual(callArg.data, {
+    type: 'chat',
+    chatId: 'chat_123',
+    senderId: validUser.uid,
   });
-  assert.equal(result.skipped, true);
+});
+
+test('onForumCommentCreated: envia notificação ao autor do post ao receber comentário', async () => {
+  const event = {
+    params: { postId: 'post_abc', commentId: 'comm_001' },
+    data: {
+      data: () => ({ authorId: validUser.uid, body: 'Excelente post!' }),
+    },
+  };
+
+  const result = await onForumCommentCreated.run(event);
+  assert.equal(result.sent, 2);
+  assert.equal(multicastMock.mock.callCount(), 1);
+
+  const callArg = multicastMock.mock.calls[0].arguments[0];
+  assert.equal(callArg.notification.title, 'mapeei — Fórum');
+  assert.equal(callArg.notification.body, 'Alguém respondeu o seu post no fórum');
+  assert.deepEqual(callArg.data, {
+    type: 'forum-comment',
+    postId: 'post_abc',
+  });
+});
+
+test('onForumCommentCreated: não notifica se o autor do comentário for o próprio autor do post', async () => {
+  const event = {
+    params: { postId: 'post_abc', commentId: 'comm_002' },
+    data: {
+      data: () => ({ authorId: recipientId, body: 'Meu próprio comentário' }),
+    },
+  };
+
+  const result = await onForumCommentCreated.run(event);
+  assert.equal(result, null);
   assert.equal(multicastMock.mock.callCount(), 0);
 });
 
-test('sendNotificationToUser: envia notificação para os tokens do destinatário', async () => {
-  const result = await sendNotificationToUser.run({
-    auth: validUser,
+test('onForumPostUpdated: notifica autor do post quando houver nova curtida', async () => {
+  const event = {
+    params: { postId: 'post_abc' },
     data: {
-      recipientUserId: recipientId,
-      title: 'Chat',
-      body: 'Você recebeu uma nova mensagem',
-      data: { type: 'chat' },
+      before: {
+        data: () => ({ authorId: recipientId, likedBy: [] }),
+      },
+      after: {
+        data: () => ({ authorId: recipientId, likedBy: [validUser.uid] }),
+      },
     },
-  });
+  };
 
+  const result = await onForumPostUpdated.run(event);
   assert.equal(result.sent, 2);
   assert.equal(multicastMock.mock.callCount(), 1);
+
   const callArg = multicastMock.mock.calls[0].arguments[0];
-  assert.equal(callArg.tokens.length, 2);
-  assert.equal(callArg.notification.title, 'Chat');
-  assert.equal(callArg.notification.body, 'Você recebeu uma nova mensagem');
-  assert.equal(callArg.android.notification.channelId, 'default');
-  assert.deepEqual(callArg.data, { type: 'chat' });
+  assert.equal(callArg.notification.title, 'mapeei — Fórum');
+  assert.equal(callArg.notification.body, 'Alguém curtiu o seu post');
+  assert.deepEqual(callArg.data, {
+    type: 'forum-like',
+    postId: 'post_abc',
+  });
 });
 
-test('sendNotificationToUser: limpa tokens inválidos retornados pelo FCM', async () => {
-  multicastMock.mock.mockImplementation(async (payload) => ({
-    successCount: 1,
-    failureCount: 1,
-    responses: [
-      { success: true, messageId: 'msg-1' },
-      {
-        success: false,
-        error: Object.assign(new Error('not registered'), {
-          code: 'messaging/registration-token-not-registered',
-        }),
-      },
-    ],
-  }));
-
-  const result = await sendNotificationToUser.run({
-    auth: validUser,
+test('onForumPostUpdated: não notifica se o próprio autor curtiu seu post', async () => {
+  const event = {
+    params: { postId: 'post_abc' },
     data: {
-      recipientUserId: recipientId,
-      title: 'Fórum',
-      body: 'Alguém respondeu o seu post no fórum',
+      before: {
+        data: () => ({ authorId: recipientId, likedBy: [] }),
+      },
+      after: {
+        data: () => ({ authorId: recipientId, likedBy: [recipientId] }),
+      },
     },
-  });
+  };
 
-  assert.equal(result.sent, 1);
-  assert.equal(result.failed, 1);
+  const result = await onForumPostUpdated.run(event);
+  assert.equal(result, null);
+  assert.equal(multicastMock.mock.callCount(), 0);
 });

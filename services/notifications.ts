@@ -47,15 +47,6 @@ const unregisterDeviceTokenCallable = httpsCallable<{ token: string }, { success
   { timeout: 15000 },
 );
 
-const sendNotificationToUserCallable = httpsCallable<
-  { recipientUserId: string; title: string; body: string; data?: Record<string, string> },
-  { sent: number; failed?: number }
->(
-  functionsSouthAmerica,
-  'sendNotificationToUser',
-  { timeout: 30000 },
-);
-
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -212,39 +203,6 @@ export async function getUserPushTokens(userId: string): Promise<string[]> {
   } catch (error) {
     console.warn('[notifications] falha ao buscar tokens do usuário:', userId, error);
     return [];
-  }
-}
-
-export type PushNotificationPayload = {
-  recipientUserId: string;
-  title: string;
-  body: string;
-  data?: Record<string, string>;
-};
-
-/**
- * Envia uma notificação push para todos os dispositivos do destinatário via Cloud Function.
- */
-export async function sendPushNotification(payload: PushNotificationPayload): Promise<{ sent: number }> {
-  if (!auth.currentUser) {
-    return { sent: 0 };
-  }
-
-  if (!payload.recipientUserId || payload.recipientUserId === auth.currentUser.uid) {
-    return { sent: 0 };
-  }
-
-  try {
-    const result = await sendNotificationToUserCallable({
-      recipientUserId: payload.recipientUserId,
-      title: payload.title,
-      body: payload.body,
-      data: payload.data,
-    });
-    return { sent: result.data.sent ?? 0 };
-  } catch (error) {
-    console.warn('[notifications] falha ao enviar notificação para usuário:', error);
-    return { sent: 0 };
   }
 }
 

@@ -20,7 +20,6 @@ import {
 } from 'firebase/firestore';
 
 import { auth, db } from '../firebase';
-import { sendPushNotification } from './notifications';
 import type { Comment, Coordinate, FlairId, Post, TopicId } from '../types/forum';
 import { withTimeout } from '../utils/withTimeout';
 
@@ -239,27 +238,6 @@ export async function addComment(postId: string, body: string): Promise<string> 
 
   await withTimeout(batch.commit(), FORUM_TIMEOUT_MS);
 
-  // Notifica o autor do post quando outro usuário comenta
-  void (async () => {
-    try {
-      const postSnap = await getDoc(postRef);
-      const postAuthorId = postSnap.data()?.authorId;
-      if (postAuthorId && postAuthorId !== uid) {
-        await sendPushNotification({
-          recipientUserId: postAuthorId,
-          title: 'mapeei — Fórum',
-          body: 'Alguém respondeu o seu post no fórum',
-          data: {
-            type: 'forum-comment',
-            postId,
-          },
-        });
-      }
-    } catch (err) {
-      console.warn('[forum] falha ao notificar autor do post sobre comentário:', err);
-    }
-  })();
-
   return commentRef.id;
 }
 
@@ -278,29 +256,6 @@ export async function toggleLike(postId: string, liked: boolean): Promise<void> 
     }),
     FORUM_TIMEOUT_MS,
   );
-
-  // Notifica o autor do post quando outro usuário curte
-  if (liked) {
-    void (async () => {
-      try {
-        const postSnap = await getDoc(doc(db, POSTS_COLLECTION, postId));
-        const postAuthorId = postSnap.data()?.authorId;
-        if (postAuthorId && postAuthorId !== uid) {
-          await sendPushNotification({
-            recipientUserId: postAuthorId,
-            title: 'mapeei — Fórum',
-            body: 'Alguém curtiu o seu post',
-            data: {
-              type: 'forum-like',
-              postId,
-            },
-          });
-        }
-      } catch (err) {
-        console.warn('[forum] falha ao notificar autor do post sobre curtida:', err);
-      }
-    })();
-  }
 }
 
 export type TopicSummary = {

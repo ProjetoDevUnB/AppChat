@@ -15,7 +15,6 @@ import {
 } from 'firebase/firestore';
 
 import { auth, db } from '../firebase';
-import { sendPushNotification } from './notifications';
 import { TimeoutError, withTimeout } from '../utils/withTimeout';
 
 const CHATS_COLLECTION = 'chats';
@@ -171,20 +170,6 @@ export async function sendMessage(recipientId: string, text: string): Promise<st
   );
 
   await withTimeout(batch.commit(), CHAT_TIMEOUT_MS);
-
-  // Envia notificação push para o destinatário da mensagem
-  void sendPushNotification({
-    recipientUserId: recipientId,
-    title: 'mapeei — Chat',
-    body: 'Você recebeu uma nova mensagem',
-    data: {
-      type: 'chat',
-      chatId,
-      senderId: uid,
-    },
-  }).catch((error) => {
-    console.warn('[chat] falha ao enviar notificação de nova mensagem:', error);
-  });
 
   return messageRef.id;
 }
