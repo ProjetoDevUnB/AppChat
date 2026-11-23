@@ -42,6 +42,7 @@ export async function createUserProfile(user: User, name: string): Promise<void>
       name,
       email: user.email ?? '',
       photoDataUrl: null,
+      fcmTokens: [],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }),
@@ -69,6 +70,7 @@ export async function loadUserProfile(uid: string): Promise<UserProfile | null> 
     photoDataUrl: typeof data.photoDataUrl === 'string' ? data.photoDataUrl : null,
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
+    fcmTokens: Array.isArray(data.fcmTokens) ? data.fcmTokens : [],
   };
 }
 
@@ -108,6 +110,7 @@ export async function ensureUserProfile(user: User): Promise<UserProfile> {
       name,
       email: user.email ?? '',
       photoDataUrl: null,
+      fcmTokens: [],
       createdAt: null,
       updatedAt: null,
     };

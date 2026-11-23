@@ -11,7 +11,11 @@ import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './firebase';
-import { initializeNotifications } from './services/notifications';
+import {
+  initializeNotifications,
+  registerCurrentDevicePushToken,
+  setupPushTokenRefreshListener,
+} from './services/notifications';
 import CreatePostScreen from './screens/CreatePostScreen';
 import DiscoverScreen from './screens/DiscoverScreen';
 import ForumScreen from './screens/ForumScreen';
@@ -39,11 +43,21 @@ export default function App() {
     void initializeNotifications().catch(() => {
       console.warn('Não foi possível preparar o canal de notificações. O botão de teste tentará novamente.');
     });
+
+    const subscription = setupPushTokenRefreshListener();
+    return () => {
+      subscription?.remove();
+    };
   }, []);
 
   useEffect(() => onAuthStateChanged(auth, (restoredUser) => {
     setUser(restoredUser);
     setAuthReady(true);
+    if (restoredUser) {
+      void registerCurrentDevicePushToken().catch((error) => {
+        console.warn('Não foi possível registrar o token push do dispositivo:', error);
+      });
+    }
   }), []);
 
   const [fontsLoaded] = useFonts({

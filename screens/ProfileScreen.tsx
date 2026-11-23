@@ -38,6 +38,7 @@ import {
   type PhotoSource,
 } from '../services/profilePhoto';
 import { ensureUserProfile } from '../services/userProfile';
+import { unregisterCurrentDevicePushToken } from '../services/notifications';
 import { clearAuthorCache, getInitials } from '../services/users';
 import type { RootStackScreenProps } from '../types/navigation';
 import type { UserProfile } from '../types/user';
@@ -224,6 +225,12 @@ export default function ProfileScreen({ navigation }: RootStackScreenProps<'Prof
   };
 
   const handleSignOut = async () => {
+    try {
+      await unregisterCurrentDevicePushToken();
+    } catch (error: any) {
+      console.warn('[profile] falha ao desregistrar token de notificações:', error?.code ?? error);
+    }
+
     try {
       await signOut(auth);
     } catch (error: any) {

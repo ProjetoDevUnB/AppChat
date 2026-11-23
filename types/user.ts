@@ -19,4 +19,6 @@ export type UserProfile = {
   // escrita: numa leitura servida pelo cache local esses campos chegam null.
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  /** Tokens de notificação push FCM registrados para os aparelhos do usuário. */
+  fcmTokens?: string[];
 };
